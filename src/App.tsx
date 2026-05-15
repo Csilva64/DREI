@@ -1,15 +1,18 @@
 import { useState, type ReactNode } from 'react';
-import { 
-  TrendingUp, 
-  Users, 
-  DollarSign, 
-  Calendar, 
-  ArrowUpRight, 
+import {
+  TrendingUp,
+  Users,
+  DollarSign,
+  Calendar,
+  ArrowUpRight,
   ArrowDownRight,
   Info,
   ChevronRight,
-  UserCheck
+  UserCheck,
+  LogOut
 } from 'lucide-react';
+import { useAuth } from './contexts/AuthContext';
+import AuthForm from './components/AuthForm';
 import { 
   BarChart, 
   Bar, 
@@ -30,6 +33,19 @@ const COLORS = ['#f97316', '#3b82f6', '#10b981', '#6366f1', '#a855f7'];
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'overview' | 'payouts'>('overview');
+  const { session, loading, signOut } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
+        <span className="w-8 h-8 border-2 border-orange-200 border-t-orange-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <AuthForm />;
+  }
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans">
@@ -44,28 +60,37 @@ export default function App() {
               Abr/2025 – Abr/2026 · Atualizado em Mai/2026
             </p>
           </div>
-          <div className="flex bg-slate-100 p-1 rounded-xl shadow-inner-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex bg-slate-100 p-1 rounded-xl shadow-inner-sm">
+              <button
+                onClick={() => setActiveTab('overview')}
+                className={cn(
+                  "px-4 py-1.5 text-sm font-semibold rounded-lg transition-all duration-200",
+                  activeTab === 'overview'
+                    ? "bg-white text-orange-600 shadow-sm"
+                    : "text-slate-500 hover:text-slate-700"
+                )}
+              >
+                Visão Geral
+              </button>
+              <button
+                onClick={() => setActiveTab('payouts')}
+                className={cn(
+                  "px-4 py-1.5 text-sm font-semibold rounded-lg transition-all duration-200",
+                  activeTab === 'payouts'
+                    ? "bg-white text-orange-600 shadow-sm"
+                    : "text-slate-500 hover:text-slate-700"
+                )}
+              >
+                Repasses
+              </button>
+            </div>
             <button
-              onClick={() => setActiveTab('overview')}
-              className={cn(
-                "px-4 py-1.5 text-sm font-semibold rounded-lg transition-all duration-200",
-                activeTab === 'overview' 
-                  ? "bg-white text-orange-600 shadow-sm" 
-                  : "text-slate-500 hover:text-slate-700"
-              )}
+              onClick={signOut}
+              title="Sair"
+              className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all duration-200"
             >
-              Visão Geral
-            </button>
-            <button
-              onClick={() => setActiveTab('payouts')}
-              className={cn(
-                "px-4 py-1.5 text-sm font-semibold rounded-lg transition-all duration-200",
-                activeTab === 'payouts' 
-                  ? "bg-white text-orange-600 shadow-sm" 
-                  : "text-slate-500 hover:text-slate-700"
-              )}
-            >
-              Repasses
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
