@@ -1,4 +1,5 @@
 export interface MonthlyRevenue {
+  id?: number;
   month: string;
   year: number;
   revenue: number;

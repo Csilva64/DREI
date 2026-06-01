@@ -1,7 +1,6 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import {
   TrendingUp,
-  Users,
   DollarSign,
   Calendar,
   ArrowUpRight,
@@ -9,7 +8,9 @@ import {
   Info,
   ChevronRight,
   UserCheck,
-  LogOut
+  LogOut,
+  Pencil,
+  Plus,
 } from 'lucide-react';
 import { useAuth } from './contexts/AuthContext';
 import AuthForm from './components/AuthForm';
@@ -26,14 +27,43 @@ import {
   Pie
 } from 'recharts';
 import { motion, AnimatePresence } from 'motion/react';
-import { KPIS, REVENUE_DATA, CLIENT_DATA, OPERATOR_DATA } from './data';
+import { fetchKPIs, fetchRevenueData, fetchClientData, fetchOperatorData } from './lib/queries';
+import type { MonthlyRevenue, ClientData, OperatorPayout, DashboardKPIs } from './types';
 import { formatCurrency, formatPercent, cn } from './lib/utils';
+import RevenueModal from './components/RevenueModal';
 
 const COLORS = ['#f97316', '#3b82f6', '#10b981', '#6366f1', '#a855f7'];
+
+function useDashboardData() {
+  const [kpis, setKpis] = useState<DashboardKPIs | null>(null);
+  const [revenueData, setRevenueData] = useState<MonthlyRevenue[]>([]);
+  const [clientData, setClientData] = useState<ClientData[]>([]);
+  const [operatorData, setOperatorData] = useState<OperatorPayout[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [dataError, setDataError] = useState<string | null>(null);
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    setDataLoading(true);
+    Promise.all([fetchKPIs(), fetchRevenueData(), fetchClientData(), fetchOperatorData()])
+      .then(([k, r, c, o]) => {
+        setKpis(k);
+        setRevenueData(r);
+        setClientData(c);
+        setOperatorData(o);
+      })
+      .catch(err => setDataError(err.message ?? 'Erro ao carregar dados'))
+      .finally(() => setDataLoading(false));
+  }, [tick]);
+
+  return { kpis, revenueData, clientData, operatorData, dataLoading, dataError, refetch: () => setTick(t => t + 1) };
+}
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'overview' | 'payouts'>('overview');
   const { session, loading, signOut } = useAuth();
+  const { kpis, revenueData, clientData, operatorData, dataLoading, dataError, refetch } = useDashboardData();
+  const [editRow, setEditRow] = useState<MonthlyRevenue | null | 'new'>(null);
 
   if (loading) {
     return (
@@ -46,6 +76,27 @@ export default function App() {
   if (!session) {
     return <AuthForm />;
   }
+
+  if (dataLoading) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
+        <span className="w-8 h-8 border-2 border-orange-200 border-t-orange-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (dataError || !kpis) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center text-red-500 text-sm font-medium">
+        {dataError ?? 'Dados indisponíveis'}
+      </div>
+    );
+  }
+
+  const KPIS = kpis;
+  const REVENUE_DATA = revenueData;
+  const CLIENT_DATA = clientData;
+  const OPERATOR_DATA = operatorData;
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans">
@@ -270,6 +321,12 @@ export default function App() {
                 <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                   <div className="p-6 border-b border-slate-100 flex justify-between items-center">
                     <h3 className="font-bold text-slate-800">Detalhamento Mensal</h3>
+                    <button
+                      onClick={() => setEditRow('new')}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-white bg-orange-500 hover:bg-orange-600 transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Novo Mês
+                    </button>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
@@ -281,11 +338,12 @@ export default function App() {
                           <th className="px-6 py-4 text-center">Sabrina</th>
                           <th className="px-6 py-4 text-center">Giovani</th>
                           <th className="px-6 py-4 text-center">Gabriella</th>
+                          <th className="px-4 py-4 text-center w-12"></th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
                         {REVENUE_DATA.map((row) => (
-                          <tr key={row.month} className={cn("hover:bg-slate-50/50 transition-colors", row.isHighlight && "bg-orange-50/30")}>
+                          <tr key={row.month} className={cn("hover:bg-slate-50/50 transition-colors group", row.isHighlight && "bg-orange-50/30")}>
                             <td className="px-6 py-4 font-bold text-slate-700 flex items-center gap-2">
                               {row.month}
                               {row.isHighlight && <div className="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)]"></div>}
@@ -295,6 +353,14 @@ export default function App() {
                             <td className="px-6 py-4 text-slate-600 text-center">{row.sabrina > 0 ? formatCurrency(row.sabrina) : '—'}</td>
                             <td className="px-6 py-4 text-slate-600 text-center">{row.giovani > 0 ? formatCurrency(row.giovani) : '—'}</td>
                             <td className="px-6 py-4 text-slate-600 text-center">{row.gabriella > 0 ? formatCurrency(row.gabriella) : '—'}</td>
+                            <td className="px-4 py-4 text-center">
+                              <button
+                                onClick={() => setEditRow(row)}
+                                className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-orange-100 text-slate-400 hover:text-orange-600 transition-all"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -361,6 +427,15 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {editRow !== null && (
+        <RevenueModal
+          row={editRow === 'new' ? null : editRow}
+          sortOrder={REVENUE_DATA.length}
+          onClose={() => setEditRow(null)}
+          onSaved={refetch}
+        />
+      )}
     </div>
   );
 }
