@@ -103,13 +103,16 @@ export default function App() {
       {/* Header */}
       <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Fechamento Receptivo · <span className="text-orange-600">OPCO</span>
-            </h1>
-            <p className="text-sm text-slate-500 font-medium">
-              Abr/2025 – Abr/2026 · Atualizado em Mai/2026
-            </p>
+          <div className="flex items-center gap-3">
+            <img src="/logo.png.jpg" alt="OPCO" className="h-10 w-auto" />
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                Fechamento Receptivo · <span className="text-orange-600">OPCO</span>
+              </h1>
+              <p className="text-sm text-slate-500 font-medium">
+                Abr/2025 – Abr/2026 · Atualizado em Mai/2026
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex bg-slate-100 p-1 rounded-xl shadow-inner-sm">
