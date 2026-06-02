@@ -108,13 +108,13 @@ export default function RevenueModal({ row, sortOrder, onClose, onSaved }: Props
             <Field label="OPCO">
               <input type="number" className={inputCls} value={form.opco} onChange={e => set('opco', Number(e.target.value))} />
             </Field>
-            <Field label="Sabrina">
+            <Field label="Alizia">
               <input type="number" className={inputCls} value={form.sabrina} onChange={e => set('sabrina', Number(e.target.value))} />
             </Field>
-            <Field label="Giovani">
+            <Field label="Justus">
               <input type="number" className={inputCls} value={form.giovani} onChange={e => set('giovani', Number(e.target.value))} />
             </Field>
-            <Field label="Gabriella">
+            <Field label="Antonella">
               <input type="number" className={inputCls} value={form.gabriella} onChange={e => set('gabriella', Number(e.target.value))} />
             </Field>
           </div>

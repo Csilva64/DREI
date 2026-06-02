@@ -338,9 +338,9 @@ export default function App() {
                           <th className="px-6 py-4">Mês</th>
                           <th className="px-6 py-4">Faturamento</th>
                           <th className="px-6 py-4 font-bold text-orange-600 text-center">OPCO</th>
-                          <th className="px-6 py-4 text-center">Sabrina</th>
-                          <th className="px-6 py-4 text-center">Giovani</th>
-                          <th className="px-6 py-4 text-center">Gabriella</th>
+                          <th className="px-6 py-4 text-center">Alizia</th>
+                          <th className="px-6 py-4 text-center">Justus</th>
+                          <th className="px-6 py-4 text-center">Antonella</th>
                           <th className="px-4 py-4 text-center w-12"></th>
                         </tr>
                       </thead>
@@ -391,7 +391,7 @@ export default function App() {
                 </li>
                 <li className="flex gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 flex-shrink-0"></div>
-                  <span><strong>GABRIELLA:</strong> Repasses a partir de Out/2025 (FILE 2808) e Fev/2026 (complementar).</span>
+                  <span><strong>ANTONELLA:</strong> Repasses a partir de Out/2025 (FILE 2808) e Fev/2026 (complementar).</span>
                 </li>
                 <li className="flex gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-slate-500 mt-1.5 flex-shrink-0"></div>
