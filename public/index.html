@@ -1,0 +1,921 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DRE Insight â€” Dashboard financeiro em tempo real</title>
+  <meta name="description" content="Envie sua planilha e visualize em segundos receitas, repasses, top clientes e resultado bruto. DRE em tempo real para pequenas empresas e profissionais liberais." />
+  <meta property="og:title" content="DRE Insight â€” Dashboard financeiro em tempo real" />
+  <meta property="og:description" content="Seu DRE pronto em minutos, nÃ£o em horas. Sem contador. Sem planilha complexa." />
+  <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:       #185FA5;
+      --blue-light: #E6F1FB;
+      --blue-mid:   #B5D4F4;
+      --blue-dark:  #0C447C;
+      --teal:       #0F6E56;
+      --text-primary:   #1a1a18;
+      --text-secondary: #5f5e5a;
+      --text-tertiary:  #888780;
+      --bg-primary:   #ffffff;
+      --bg-secondary: #f5f4f0;
+      --border:       rgba(30,30,24,0.15);
+      --border-md:    rgba(30,30,24,0.28);
+      --radius-md: 8px;
+      --radius-lg: 12px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --text-primary:   #e8e6df;
+        --text-secondary: #a8a69f;
+        --text-tertiary:  #6e6c67;
+        --bg-primary:   #1c1c1a;
+        --bg-secondary: #242422;
+        --border:       rgba(220,216,200,0.12);
+        --border-md:    rgba(220,216,200,0.22);
+        --blue-light: #0c2a45;
+        --blue-mid:   #0c3a5e;
+      }
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+      color: var(--text-primary);
+      background: var(--bg-primary);
+    }
+
+    /* â”€â”€ NAV â”€â”€ */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--bg-primary);
+      border-bottom: 0.5px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+    }
+    .nav-logo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 20px;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--blue); }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a { font-size: 14px; color: var(--text-secondary); text-decoration: none; }
+    .nav-links a:hover { color: var(--text-primary); }
+    .nav-cta {
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      padding: 9px 20px;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      text-decoration: none;
+    }
+    .nav-cta:hover { background: var(--blue-dark); }
+
+    /* â”€â”€ LAYOUT â”€â”€ */
+    .container { max-width: 960px; margin: 0 auto; padding: 0 2rem; }
+
+    /* â”€â”€ HERO â”€â”€ */
+    .hero { padding: 5rem 0 3.5rem; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 4px 14px;
+      border-radius: 20px;
+      background: var(--blue-light);
+      color: var(--blue);
+      margin-bottom: 1.5rem;
+    }
+    .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--blue); display: inline-block; }
+
+    h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(36px, 5vw, 52px);
+      font-weight: 400;
+      line-height: 1.12;
+      letter-spacing: -0.5px;
+      margin-bottom: 1.25rem;
+      max-width: 680px;
+    }
+    h1 em { font-style: italic; color: var(--blue); }
+
+    .hero-sub {
+      font-size: 18px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+      max-width: 520px;
+      margin-bottom: 2.5rem;
+    }
+
+    .cta-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 1.25rem; }
+
+    .btn-primary {
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      padding: 14px 32px;
+      border-radius: var(--radius-md);
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      text-decoration: none;
+      display: inline-block;
+      transition: background .15s;
+    }
+    .btn-primary:hover { background: var(--blue-dark); }
+
+    .btn-ghost {
+      background: transparent;
+      border: 0.5px solid var(--border-md);
+      color: var(--text-primary);
+      padding: 14px 28px;
+      border-radius: var(--radius-md);
+      font-size: 16px;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      text-decoration: none;
+      display: inline-block;
+      transition: background .15s;
+    }
+    .btn-ghost:hover { background: var(--bg-secondary); }
+
+    .trust-line { font-size: 13px; color: var(--text-tertiary); }
+    .trust-line strong { color: var(--text-secondary); }
+
+    /* â”€â”€ MOCKUP â”€â”€ */
+    .mockup-wrap {
+      background: var(--bg-secondary);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      margin: 3rem 0;
+    }
+    .mockup-bar { display: flex; gap: 5px; margin-bottom: 14px; }
+    .mockup-bar span { width: 10px; height: 10px; border-radius: 50%; background: var(--border-md); }
+
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
+    @media (max-width: 640px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .kpi {
+      background: var(--bg-primary);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+    }
+    .kpi-l { font-size: 11px; color: var(--text-tertiary); margin-bottom: 3px; }
+    .kpi-v { font-size: 18px; font-weight: 500; color: var(--text-primary); }
+    .kpi-v.up { color: var(--teal); }
+
+    .chart-mock {
+      background: var(--bg-primary);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+    .chart-label { font-size: 12px; color: var(--text-secondary); font-weight: 500; margin-bottom: 10px; }
+    .bars-container { display: flex; align-items: flex-end; gap: 6px; height: 80px; }
+    .mock-bar { flex: 1; border-radius: 3px 3px 0 0; }
+
+    .mini-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .mini-card {
+      background: var(--bg-primary);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+    }
+    .mini-l { font-size: 10px; color: var(--text-tertiary); margin-bottom: 4px; }
+    .mini-v { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+    .mini-sub { font-size: 11px; color: var(--text-tertiary); margin-bottom: 6px; }
+    .seg-bar { display: flex; gap: 3px; }
+    .seg-bar div { height: 4px; border-radius: 2px; }
+    .client-track { height: 5px; background: var(--blue-mid); border-radius: 3px; margin-top: 5px; }
+    .client-fill  { height: 5px; background: var(--blue); border-radius: 3px; }
+
+    /* â”€â”€ SECTIONS â”€â”€ */
+    section { padding: 4rem 0; border-top: 0.5px solid var(--border); }
+
+    .section-tag {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--blue);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: .75rem;
+    }
+    h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(26px, 3.5vw, 34px);
+      font-weight: 400;
+      line-height: 1.2;
+      margin-bottom: .85rem;
+    }
+    .section-sub {
+      font-size: 16px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+      max-width: 500px;
+      margin-bottom: 2.5rem;
+    }
+
+    /* â”€â”€ FEATURES â”€â”€ */
+    .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    @media (max-width: 640px) { .features { grid-template-columns: 1fr; } }
+
+    .feat {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+    }
+    .feat-icon {
+      width: 40px; height: 40px;
+      border-radius: var(--radius-md);
+      background: var(--blue-light);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1rem;
+    }
+    .feat-icon i { font-size: 20px; color: var(--blue); }
+    .feat h3 { font-size: 15px; font-weight: 500; margin-bottom: 6px; }
+    .feat p  { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+
+    /* â”€â”€ AUDIENCES â”€â”€ */
+    .audiences { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    @media (max-width: 580px) { .audiences { grid-template-columns: 1fr; } }
+
+    .aud {
+      background: var(--bg-primary);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+      display: flex; gap: 14px; align-items: flex-start;
+    }
+    .aud-icon { font-size: 24px; color: var(--blue); flex-shrink: 0; margin-top: 2px; }
+    .aud h3 { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+    .aud p  { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
+
+    /* â”€â”€ PLANS â”€â”€ */
+    .plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    @media (max-width: 640px) { .plans { grid-template-columns: 1fr; } }
+
+    .plan {
+      background: var(--bg-primary);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      display: flex; flex-direction: column;
+    }
+    .plan.featured { border: 2px solid var(--blue); }
+
+    .plan-badge {
+      font-size: 11px; font-weight: 500;
+      background: var(--blue-light); color: var(--blue);
+      padding: 3px 12px; border-radius: 20px;
+      display: inline-block; margin-bottom: 1rem; width: fit-content;
+    }
+    .plan h3 { font-size: 16px; font-weight: 500; margin-bottom: 4px; }
+    .plan-price {
+      font-family: 'DM Serif Display', serif;
+      font-size: 32px; margin: .6rem 0 .3rem;
+    }
+    .plan-price span { font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text-secondary); font-weight: 400; }
+    .plan-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.55; margin-bottom: 1.25rem; flex: 1; }
+
+    .plan-items { list-style: none; display: flex; flex-direction: column; gap: 8px; margin-bottom: 1.5rem; }
+    .plan-items li { font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; }
+    .plan-items li i { font-size: 15px; color: var(--teal); flex-shrink: 0; }
+
+    .plan-btn {
+      width: 100%; padding: 12px;
+      border-radius: var(--radius-md);
+      font-size: 14px; font-weight: 500;
+      cursor: pointer; font-family: 'DM Sans', sans-serif;
+      border: 0.5px solid var(--border-md);
+      background: transparent; color: var(--text-primary);
+      transition: background .15s;
+    }
+    .plan-btn:hover { background: var(--bg-secondary); }
+    .plan.featured .plan-btn { background: var(--blue); color: #fff; border: none; }
+    .plan.featured .plan-btn:hover { background: var(--blue-dark); }
+
+    /* â”€â”€ TESTIMONIALS â”€â”€ */
+    .testimonials { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 2rem; }
+    @media (max-width: 580px) { .testimonials { grid-template-columns: 1fr; } }
+
+    .testi {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+    }
+    .testi-text { font-size: 15px; line-height: 1.7; margin-bottom: 1.25rem; }
+    .testi-author { display: flex; align-items: center; gap: 12px; }
+    .avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--blue-light);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 500; color: var(--blue); flex-shrink: 0;
+    }
+    .author-name  { font-size: 14px; font-weight: 500; }
+    .author-role  { font-size: 12px; color: var(--text-tertiary); }
+
+    /* â”€â”€ FAQ â”€â”€ */
+    .faq { margin-top: 2rem; }
+    .faq-item { border-bottom: 0.5px solid var(--border); }
+    .faq-q {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 15px; font-weight: 500;
+      padding: 1.25rem 0; cursor: pointer;
+      gap: 12px;
+    }
+    .faq-q:hover { color: var(--blue); }
+    .faq-chevron { transition: transform .25s; color: var(--text-tertiary); flex-shrink: 0; font-size: 18px; }
+    .faq-a {
+      font-size: 14px; color: var(--text-secondary);
+      line-height: 1.7; padding-bottom: 1.25rem;
+      display: none;
+    }
+    .faq-item.open .faq-a     { display: block; }
+    .faq-item.open .faq-chevron { transform: rotate(180deg); }
+
+    /* â”€â”€ FINAL CTA â”€â”€ */
+    .final-cta {
+      padding: 5rem 0;
+      text-align: center;
+      border-top: 0.5px solid var(--border);
+    }
+    .final-cta .section-tag { display: block; margin-bottom: .75rem; }
+    .final-cta h2 { margin: 0 auto .85rem; }
+    .final-cta p { font-size: 16px; color: var(--text-secondary); margin-bottom: 2rem; }
+
+    /* â”€â”€ FOOTER â”€â”€ */
+    footer {
+      border-top: 0.5px solid var(--border);
+      padding: 1.75rem 0;
+    }
+    .footer-inner {
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 12px;
+      font-size: 13px; color: var(--text-tertiary);
+    }
+    .footer-logo { font-family: 'DM Serif Display', serif; font-size: 16px; color: var(--text-primary); }
+    .footer-links { display: flex; gap: 1.5rem; }
+    .footer-links a { color: var(--text-tertiary); text-decoration: none; }
+    .footer-links a:hover { color: var(--text-primary); }
+
+    /* â”€â”€ MOBILE NAV â”€â”€ */
+    @media (max-width: 680px) {
+      .nav-links { display: none; }
+      nav { padding: 0 1.25rem; }
+      .container { padding: 0 1.25rem; }
+      .hero { padding: 3rem 0 2rem; }
+    }
+
+    /* â”€â”€ EMAIL CAPTURE â”€â”€ */
+    .capture-band {
+      background: var(--blue);
+      padding: 3.5rem 0;
+      margin: 0;
+    }
+    .capture-inner {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+    .capture-copy { flex: 1; min-width: 240px; }
+    .capture-copy h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(22px, 3vw, 28px);
+      font-weight: 400;
+      color: #fff;
+      margin-bottom: .4rem;
+      line-height: 1.2;
+    }
+    .capture-copy p { font-size: 14px; color: rgba(255,255,255,0.72); }
+
+    .capture-form { display: flex; gap: 8px; flex: 1; min-width: 280px; max-width: 460px; }
+    .capture-form input[type="email"] {
+      flex: 1;
+      padding: 13px 16px;
+      border-radius: var(--radius-md);
+      border: none;
+      font-size: 15px;
+      font-family: 'DM Sans', sans-serif;
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      outline: none;
+    }
+    .capture-form input[type="email"]::placeholder { color: rgba(255,255,255,0.5); }
+    .capture-form input[type="email"]:focus { background: rgba(255,255,255,0.22); }
+    .capture-form button {
+      padding: 13px 22px;
+      background: #fff;
+      color: var(--blue);
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      white-space: nowrap;
+      transition: opacity .15s;
+    }
+    .capture-form button:hover { opacity: .9; }
+
+    .capture-success {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 500;
+    }
+    .capture-success i { font-size: 22px; color: #5DCAA5; }
+
+    /* Modal overlay */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      border: 0.5px solid var(--border);
+      padding: 2rem;
+      width: 100%;
+      max-width: 420px;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+    }
+    .modal-header h3 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 22px;
+      font-weight: 400;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-tertiary);
+      font-size: 20px;
+      padding: 4px;
+      display: flex;
+    }
+    .modal-close:hover { color: var(--text-primary); }
+    .modal p { font-size: 14px; color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.6; }
+    .modal-form { display: flex; flex-direction: column; gap: 10px; }
+    .modal-form input {
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      border: 0.5px solid var(--border-md);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 15px;
+      font-family: 'DM Sans', sans-serif;
+      outline: none;
+    }
+    .modal-form input:focus { border-color: var(--blue); }
+    .modal-form select {
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      border: 0.5px solid var(--border-md);
+      background: var(--bg-primary);
+      color: var(--text-secondary);
+      font-size: 15px;
+      font-family: 'DM Sans', sans-serif;
+      outline: none;
+    }
+    .modal-form select:focus { border-color: var(--blue); }
+    .modal-form button {
+      padding: 13px;
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      margin-top: 4px;
+      transition: background .15s;
+    }
+    .modal-form button:hover { background: var(--blue-dark); }
+    .modal-lgpd {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      text-align: center;
+      margin-top: .75rem;
+    }
+    .modal-success {
+      text-align: center;
+      padding: 1rem 0;
+      display: none;
+    }
+    .modal-success i { font-size: 48px; color: #1D9E75; margin-bottom: .75rem; display: block; }
+    .modal-success h3 { font-size: 20px; font-weight: 500; margin-bottom: .5rem; }
+    .modal-success p { font-size: 14px; color: var(--text-secondary); }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a class="nav-logo" href="#">DRE <span>Insight</span></a>
+    <ul class="nav-links">
+      <li><a href="#funcionalidades">Funcionalidades</a></li>
+      <li><a href="#planos">Planos</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ul>
+    <a class="nav-cta" href="#planos">ComeÃ§ar grÃ¡tis</a>
+  </nav>
+
+  <div class="container">
+
+    <!-- HERO -->
+    <div class="hero">
+      <div class="badge"><span class="badge-dot"></span>Dashboard financeiro com IA</div>
+      <h1>Seu DRE em tempo real,<br><em>sem complicaÃ§Ã£o</em></h1>
+      <p class="hero-sub">Envie sua planilha de faturamento e visualize em segundos receitas, repasses, top clientes e resultado bruto â€” com grÃ¡ficos prontos para compartilhar.</p>
+      <div class="cta-row">
+        <a class="btn-primary" href="#planos">ComeÃ§ar grÃ¡tis por 14 dias</a>
+        <a class="btn-ghost" href="#funcionalidades">Ver funcionalidades</a>
+      </div>
+      <p class="trust-line">Sem cartÃ£o de crÃ©dito &nbsp;Â·&nbsp; <strong>Cancele quando quiser</strong> &nbsp;Â·&nbsp; Dados protegidos por LGPD</p>
+    </div>
+
+    <!-- MOCKUP -->
+    <div class="mockup-wrap">
+      <div class="mockup-bar"><span></span><span></span><span></span></div>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-l">Faturamento total</div><div class="kpi-v">R$ 5,64M</div></div>
+        <div class="kpi"><div class="kpi-l">Melhor mÃªs</div><div class="kpi-v">Out/25</div></div>
+        <div class="kpi"><div class="kpi-l">MÃ©dia mensal</div><div class="kpi-v">R$ 513K</div></div>
+        <div class="kpi"><div class="kpi-l">YoY 2025â†’2026</div><div class="kpi-v up">+18,4%</div></div>
+      </div>
+      <div class="chart-mock">
+        <div class="chart-label">Faturamento mensal</div>
+        <div class="bars-container" id="mockBars"></div>
+      </div>
+      <div class="mini-row">
+        <div class="mini-card">
+          <div class="mini-l">Top cliente</div>
+          <div class="mini-v">SchWin</div>
+          <div class="mini-sub">R$ 2,04M Â· 36,2%</div>
+          <div class="client-track"><div class="client-fill" style="width:100%"></div></div>
+        </div>
+        <div class="mini-card">
+          <div class="mini-l">Total repasses</div>
+          <div class="mini-v">R$ 640.125</div>
+          <div class="mini-sub">You-To Â· ALIZIA Â· JUSTUS Â· ANTONELLA</div>
+          <div class="seg-bar">
+            <div style="flex:4;background:#185FA5"></div>
+            <div style="flex:1;background:#1D9E75"></div>
+            <div style="flex:1;background:#D85A30"></div>
+            <div style="flex:0.8;background:#BA7517"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FEATURES -->
+    <section id="funcionalidades">
+      <div class="section-tag">Funcionalidades</div>
+      <h2>Tudo que vocÃª precisa para<br>entender seu negÃ³cio</h2>
+      <p class="section-sub">Sem planilhas complexas. Sem contador necessÃ¡rio. SÃ³ os nÃºmeros que importam, quando vocÃª precisa.</p>
+      <div class="features">
+        <div class="feat">
+          <div class="feat-icon"><i class="ti ti-upload" aria-hidden="true"></i></div>
+          <h3>Upload simples</h3>
+          <p>Envie sua planilha de faturamento e o sistema processa automaticamente em segundos.</p>
+        </div>
+        <div class="feat">
+          <div class="feat-icon"><i class="ti ti-chart-bar" aria-hidden="true"></i></div>
+          <h3>DRE visual</h3>
+          <p>Receitas, custos, resultado bruto e lÃ­quido em grÃ¡ficos interativos prontos para apresentar.</p>
+        </div>
+        <div class="feat">
+          <div class="feat-icon"><i class="ti ti-users" aria-hidden="true"></i></div>
+          <h3>Ranking de clientes</h3>
+          <p>Saiba quais clientes geram mais receita e acompanhe a evoluÃ§Ã£o mÃªs a mÃªs.</p>
+        </div>
+        <div class="feat">
+          <div class="feat-icon"><i class="ti ti-arrows-split-2" aria-hidden="true"></i></div>
+          <h3>Repasses automÃ¡ticos</h3>
+          <p>Calcule e distribua repasses por operador, sÃ³cio ou equipe sem erro de planilha.</p>
+        </div>
+        <div class="feat">
+          <div class="feat-icon"><i class="ti ti-file-type-pdf" aria-hidden="true"></i></div>
+          <h3>PDF em 1 clique</h3>
+          <p>Exporte o dashboard completo em PDF profissional para enviar por WhatsApp ou e-mail.</p>
+        </div>
+        <div class="feat">
+          <div class="feat-icon"><i class="ti ti-plug" aria-hidden="true"></i></div>
+          <h3>Pronto para API</h3>
+          <p>Conecte sua base de dados externa para atualizaÃ§Ã£o automÃ¡tica dos indicadores.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- AUDIENCES -->
+    <section id="publicos">
+      <div class="section-tag">Para quem Ã©</div>
+      <h2>Feito para quem precisa de<br>clareza, nÃ£o de complexidade</h2>
+      <p class="section-sub">Seja vocÃª gestor, profissional liberal ou empreendedor â€” se quer entender seus nÃºmeros sem depender de contador, o DRE Insight Ã© para vocÃª.</p>
+      <div class="audiences">
+        <div class="aud"><i class="ti ti-building-store aud-icon" aria-hidden="true"></i><div><h3>Pequenas empresas e MEI</h3><p>Tenha uma visÃ£o clara do faturamento, resultado e clientes sem precisar de software caro.</p></div></div>
+        <div class="aud"><i class="ti ti-briefcase aud-icon" aria-hidden="true"></i><div><h3>Profissionais liberais</h3><p>MÃ©dicos, advogados, consultores: visualize suas receitas, honorÃ¡rios e repasses de forma simples.</p></div></div>
+        <div class="aud"><i class="ti ti-plane aud-icon" aria-hidden="true"></i><div><h3>AgÃªncias e operadoras</h3><p>Controle fechamentos mensais, repasses por operador e ranking de clientes em tempo real.</p></div></div>
+        <div class="aud"><i class="ti ti-chart-arrows-vertical aud-icon" aria-hidden="true"></i><div><h3>Gestores financeiros</h3><p>Consolide mÃºltiplas fontes de receita e apresente relatÃ³rios visuais para sÃ³cios e diretoria.</p></div></div>
+      </div>
+    </section>
+
+    <!-- PLANS -->
+    <section id="planos">
+      <div class="section-tag">Planos</div>
+      <h2>Simples e sem surpresas</h2>
+      <p class="section-sub">Comece grÃ¡tis. Escale conforme seu negÃ³cio cresce.</p>
+      <div class="plans">
+        <div class="plan">
+          <h3>Starter</h3>
+          <div class="plan-price">R$ 99<span>/mÃªs</span></div>
+          <p class="plan-desc">Para autÃ´nomos e MEI que querem comeÃ§ar a enxergar seus nÃºmeros.</p>
+          <ul class="plan-items">
+            <li><i class="ti ti-check" aria-hidden="true"></i>1 empresa</li>
+            <li><i class="ti ti-check" aria-hidden="true"></i>Upload manual de planilha</li>
+            <li><i class="ti ti-check" aria-hidden="true"></i>DRE mensal e anual</li>
+            <li><i class="ti ti-check" aria-hidden="true"></i>Export PDF</li>
+            <li><i class="ti ti-check" aria-hidden="true"></i>14 dias grÃ¡tis</li>
+          </ul>
+          <a class="plan-btn" href="https://opco-ia.pay.yampi.com.br/r/SAZOHDAPVB" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">ComeÃ§ar grÃ¡tis</a>
+        </div>
+        <div class="plan featured">
+          <div class="plan-badge">Mais popular</div>
+          <h3>Pro</h3>
+          <div class="plan-price">R$ 198<span>/mÃªs</span></div>
+          <p class="plan-desc">Para empresas que precisam de mÃºltiplas visÃµes e integraÃ§Ã£o com sistemas.</p>
+          <ul class="plan-items">
+            <li><i class="ti ti-check" aria-hidden="true"></i>AtÃ© 3 empresas</li>
+            <li><i class="ti ti-check" aria-hidden="true"></i>IntegraÃ§Ã£o via API</li>
+            <li><i class="ti ti-check" aria-hidden="true"></i>Repasses por operador</li>
+            <li><i class="ti ti-check" aria-hidden="true"></i>Comparativo YoY</li>
+            <li><i class="ti ti-check" aria-hidden="true"></i>Ranking top 5 clientes</li>
+          </ul>
+          <a class="plan-btn" href="https://opco-ia.pay.yampi.com.br/r/3WGDZY17ZP" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">Escolher Pro</a>
+        </div>
+        <div class="plan">
+          <h3>AgÃªncia</h3>
+          <div class="plan-price">R$ 597<span>/mÃªs</span></div>
+          <p class="plan-desc">Para escritÃ³rios e consultorias que atendem mÃºltiplos clientes.</p>
+          <ul class="plan-items">
+            <li><i class="ti ti-check" aria-hidden="true"></i>Empresas ilimitadas</li>
+            <li><i class="ti ti-check" aria-hidden="true"></i>White label</li>
+            <li><i class="ti ti-check" aria-hidden="true"></i>Suporte prioritÃ¡rio</li>
+            <li><i class="ti ti-check" aria-hidden="true"></i>Onboarding dedicado</li>
+            <li><i class="ti ti-check" aria-hidden="true"></i>SLA garantido</li>
+          </ul>
+          <a class="plan-btn" href="https://opco-ia.pay.yampi.com.br/r/6RWS3LHPWA" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">Falar com vendas</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- TESTIMONIALS -->
+    <section id="depoimentos">
+      <div class="section-tag">Depoimentos</div>
+      <h2>Quem jÃ¡ usa o DRE Insight</h2>
+      <div class="testimonials">
+        <div class="testi">
+          <p class="testi-text">"Finalmente consigo ver em segundos quanto entrou, quanto repassei e qual foi meu resultado no mÃªs. Antes levava horas na planilha."</p>
+          <div class="testi-author"><div class="avatar">CS</div><div><div class="author-name">Carla S.</div><div class="author-role">Operadora de turismo receptivo Â· Rio de Janeiro</div></div></div>
+        </div>
+        <div class="testi">
+          <p class="testi-text">"Uso para apresentar o DRE aos meus sÃ³cios toda semana. O PDF gerado automaticamente economiza 2 horas do meu tempo toda vez."</p>
+          <div class="testi-author"><div class="avatar">RM</div><div><div class="author-name">Ricardo M.</div><div class="author-role">Consultor financeiro Â· SÃ£o Paulo</div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq">
+      <div class="section-tag">DÃºvidas frequentes</div>
+      <h2>Perguntas e respostas</h2>
+      <div class="faq">
+        <div class="faq-item">
+          <div class="faq-q">Preciso saber programar para usar?<i class="ti ti-chevron-down faq-chevron" aria-hidden="true"></i></div>
+          <div class="faq-a">NÃ£o. Basta enviar sua planilha de faturamento no formato Excel ou CSV e o DRE Insight gera todos os grÃ¡ficos e relatÃ³rios automaticamente.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Meus dados ficam seguros?<i class="ti ti-chevron-down faq-chevron" aria-hidden="true"></i></div>
+          <div class="faq-a">Sim. Todos os dados sÃ£o criptografados e tratados conforme a LGPD. VocÃª tem total controle sobre o que Ã© armazenado e pode excluir seus dados a qualquer momento.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Funciona com qualquer planilha?<i class="ti ti-chevron-down faq-chevron" aria-hidden="true"></i></div>
+          <div class="faq-a">O sistema aceita planilhas Excel (.xlsx) e CSV. Se vocÃª usa um ERP ou sistema prÃ³prio, o plano Pro e AgÃªncia permitem integraÃ§Ã£o direta via API.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Posso cancelar quando quiser?<i class="ti ti-chevron-down faq-chevron" aria-hidden="true"></i></div>
+          <div class="faq-a">Sim, sem burocracia. O cancelamento Ã© feito em 1 clique no painel e nÃ£o hÃ¡ multa ou fidelidade mÃ­nima.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Existe versÃ£o para celular?<i class="ti ti-chevron-down faq-chevron" aria-hidden="true"></i></div>
+          <div class="faq-a">O DRE Insight Ã© responsivo e funciona perfeitamente em qualquer dispositivo â€” celular, tablet ou computador.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FINAL CTA -->
+    <div class="final-cta">
+      <span class="section-tag">Comece hoje</span>
+      <h2>Seu DRE pronto em minutos,<br>nÃ£o em horas</h2>
+      <p>14 dias grÃ¡tis. Sem cartÃ£o de crÃ©dito. Cancele quando quiser.</p>
+      <a class="btn-primary" href="#planos" style="font-size:17px;padding:16px 40px">Criar minha conta grÃ¡tis</a>
+    </div>
+
+  </div>
+
+  <!-- EMAIL CAPTURE BAND -->
+  <div class="capture-band" id="captura">
+    <div class="capture-inner">
+      <div class="capture-copy">
+        <h2>Receba acesso antecipado</h2>
+        <p>Seja avisado no lanÃ§amento e ganhe 30 dias grÃ¡tis.</p>
+      </div>
+      <form class="capture-form" id="bandForm" onsubmit="handleBandSubmit(event)">
+        <input type="email" placeholder="seu@email.com.br" required aria-label="Seu e-mail" />
+        <button type="submit">Quero acesso</button>
+      </form>
+      <div class="capture-success" id="bandSuccess">
+        <i class="ti ti-circle-check" aria-hidden="true"></i>
+        <span>Ã“timo! VocÃª estÃ¡ na lista.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE CADASTRO -->
+  <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div id="modalFormWrap">
+        <div class="modal-header">
+          <h3 id="modalTitle">Garantir meu acesso</h3>
+          <button class="modal-close" onclick="closeModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button>
+        </div>
+        <p id="modalDesc">Preencha os dados abaixo e entraremos em contato para configurar sua conta.</p>
+        <form class="modal-form" id="modalForm" onsubmit="handleModalSubmit(event)">
+          <input type="text"  id="modalName"  placeholder="Seu nome completo" required />
+          <input type="email" id="modalEmail" placeholder="seu@email.com.br" required />
+          <input type="tel"   id="modalPhone" placeholder="WhatsApp (opcional)" />
+          <select id="modalPlan" aria-label="Plano de interesse">
+            <option value="">Plano de interesse...</option>
+            <option value="Starter">Starter â€” R$ 99/mÃªs</option>
+            <option value="Pro">Pro â€” R$ 198/mÃªs</option>
+            <option value="AgÃªncia">AgÃªncia â€” R$ 597/mÃªs</option>
+          </select>
+          <button type="submit">Garantir meu acesso grÃ¡tis</button>
+        </form>
+        <p class="modal-lgpd">Seus dados sÃ£o protegidos pela LGPD e nunca serÃ£o compartilhados.</p>
+      </div>
+      <div class="modal-success" id="modalSuccess">
+        <i class="ti ti-circle-check" aria-hidden="true"></i>
+        <h3>Tudo certo!</h3>
+        <p>Recebemos seu cadastro. Entraremos em contato em breve pelo e-mail informado.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container">
+      <div class="footer-inner">
+        <span class="footer-logo">DRE Insight</span>
+        <div class="footer-links">
+          <a href="#">Privacidade</a>
+          <a href="#">Termos de uso</a>
+          <a href="mailto:contato@dreinsight.com.br">Contato</a>
+        </div>
+        <span>Â© 2026 DRE Insight. Todos os direitos reservados.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Mock bar chart
+    const barData   = [35,18,24,85,100,72,55,48,98,38,62];
+    const barColors = ['#378ADD','#378ADD','#378ADD','#378ADD','#378ADD','#378ADD','#378ADD','#1D9E75','#1D9E75','#1D9E75','#1D9E75'];
+    const barsContainer = document.getElementById('mockBars');
+    barData.forEach((h, i) => {
+      const b = document.createElement('div');
+      b.className = 'mock-bar';
+      b.style.height = h + '%';
+      b.style.background = barColors[i];
+      barsContainer.appendChild(b);
+    });
+
+    // FAQ accordion
+    document.querySelectorAll('.faq-item').forEach(item => {
+      item.querySelector('.faq-q').addEventListener('click', () => {
+        const isOpen = item.classList.contains('open');
+        document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+        if (!isOpen) item.classList.add('open');
+      });
+    });
+
+    // Modal
+    function openModal(plan) {
+      const overlay = document.getElementById('modalOverlay');
+      const sel = document.getElementById('modalPlan');
+      if (plan && sel) sel.value = plan;
+      document.getElementById('modalFormWrap').style.display = 'block';
+      document.getElementById('modalSuccess').style.display  = 'none';
+      overlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    document.getElementById('modalOverlay').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    function handleModalSubmit(e) {
+      e.preventDefault();
+      const name  = document.getElementById('modalName').value.trim();
+      const email = document.getElementById('modalEmail').value.trim();
+      const phone = document.getElementById('modalPhone').value.trim();
+      const plan  = document.getElementById('modalPlan').value;
+
+      const FORM_ENDPOINT = 'https://formspree.io/f/SEU_ID_AQUI';
+
+      fetch(FORM_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ name, email, phone, plan, source: 'modal' })
+      }).catch(() => {});
+
+      document.getElementById('modalFormWrap').style.display = 'none';
+      document.getElementById('modalSuccess').style.display  = 'block';
+    }
+
+    // Band form
+    function handleBandSubmit(e) {
+      e.preventDefault();
+      const email = e.target.querySelector('input[type="email"]').value.trim();
+
+      const FORM_ENDPOINT = 'https://formspree.io/f/SEU_ID_AQUI';
+      fetch(FORM_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ email, source: 'banda' })
+      }).catch(() => {});
+
+      document.getElementById('bandForm').style.display    = 'none';
+      document.getElementById('bandSuccess').style.display = 'flex';
+    }
+  </script>
+
+</body>
+</html>
