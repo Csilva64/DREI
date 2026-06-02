@@ -184,7 +184,7 @@ export default function App() {
                 <KpiCard 
                   title="YoY 2025 → 2026" 
                   value={formatPercent(KPIS.yoyGrowth)} 
-                  subtitle="Impactado pelo FILE 2808"
+                  subtitle="Impactado pelo TRIGGER 2808"
                   icon={KPIS.yoyGrowth < 0 ? <ArrowDownRight className="w-5 h-5 text-red-600" /> : <ArrowUpRight className="w-5 h-5 text-emerald-600" />}
                   accent={KPIS.yoyGrowth < 0 ? "red" : "emerald"}
                 />
@@ -387,7 +387,7 @@ export default function App() {
               <ul className="space-y-3 text-slate-400 text-sm">
                 <li className="flex gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-1.5 flex-shrink-0"></div>
-                  <span><strong>Out/25:</strong> Atualizado com FILE 2808 — evento Peace Boat Carnaval 2026.</span>
+                  <span><strong>Out/25:</strong> Atualizado com TRIGGER 2808 — Carnaval 2026.</span>
                 </li>
                 <li className="flex gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 flex-shrink-0"></div>
