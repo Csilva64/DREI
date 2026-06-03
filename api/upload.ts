@@ -19,6 +19,9 @@ async function recalculateKPIs(): Promise<void> {
   const monthlyAverage = totalRevenue / revenue.length
   const best = revenue.reduce((a: any, b: any) => Number(a.revenue) > Number(b.revenue) ? a : b)
   const totalPayouts = payouts?.reduce((s: number, p: any) => s + Number(p.total), 0) ?? 0
+  const total2025 = revenue.filter((r: any) => Number(r.year) === 2025).reduce((s: number, r: any) => s + Number(r.revenue), 0)
+  const total2026 = revenue.filter((r: any) => Number(r.year) === 2026).reduce((s: number, r: any) => s + Number(r.revenue), 0)
+  const yoyGrowth = total2025 > 0 ? ((total2026 - total2025) / total2025) * 100 : 0
   await supabase.from('dashboard_kpis').upsert({
     id: 1,
     total_revenue: totalRevenue,
@@ -26,7 +29,7 @@ async function recalculateKPIs(): Promise<void> {
     best_month_value: Number(best.revenue),
     monthly_average: monthlyAverage,
     total_payouts: totalPayouts,
-    yoy_growth: 0,
+    yoy_growth: Math.round(yoyGrowth * 10) / 10,
   })
 }
 
