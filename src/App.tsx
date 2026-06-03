@@ -31,7 +31,6 @@ import { fetchKPIs, fetchRevenueData, fetchClientData, fetchOperatorData } from 
 import type { MonthlyRevenue, ClientData, OperatorPayout, DashboardKPIs } from './types';
 import { formatCurrency, formatPercent, cn } from './lib/utils';
 import RevenueModal from './components/RevenueModal';
-import { exportCSV, exportPDF } from './lib/export';
 import ImportModal from './components/ImportModal';
 
 const COLORS = ['#f97316', '#3b82f6', '#10b981', '#6366f1', '#a855f7'];
@@ -416,18 +415,6 @@ export default function App() {
                   >
                     Importar Dados <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </button>
-                  <button
-                    onClick={() => exportPDF(REVENUE_DATA, CLIENT_DATA, OPERATOR_DATA, KPIS)}
-                    className="w-full bg-white/10 border border-white/20 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-white/20 transition-all flex items-center justify-center gap-2"
-                  >
-                    Exportar PDF
-                  </button>
-                  <button
-                    onClick={() => exportCSV(REVENUE_DATA, CLIENT_DATA, OPERATOR_DATA)}
-                    className="w-full bg-white/10 border border-white/20 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-white/20 transition-all flex items-center justify-center gap-2"
-                  >
-                    Exportar CSV
-                  </button>
                 </div>
               </div>
             </div>
@@ -446,7 +433,7 @@ export default function App() {
           <div className="flex gap-8 text-xs font-medium text-slate-400">
             <a href="#" className="hover:text-slate-900 transition-colors">Suporte</a>
             <a href="#" className="hover:text-slate-900 transition-colors">Documetação</a>
-            <button onClick={() => exportCSV(REVENUE_DATA, CLIENT_DATA, OPERATOR_DATA)} className="hover:text-slate-900 transition-colors">Exportação CSV</button>
+            <a href="#" className="hover:text-slate-900 transition-colors">Documentação</a>
           </div>
         </div>
       </footer>
