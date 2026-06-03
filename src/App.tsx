@@ -109,7 +109,7 @@ export default function App() {
             <img src="/logo.png.jpg" alt="OPCO" className="h-10 w-auto" />
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                Fechamento Receptivo · <span className="text-orange-600">OPCO</span>
+                DRE-I · <span className="text-orange-600">OPCO</span>
               </h1>
               <p className="text-sm text-slate-500 font-medium">
                 Abr/2025 – Abr/2026 · Atualizado em Mai/2026
@@ -428,7 +428,7 @@ export default function App() {
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2 text-slate-400">
             <UserCheck className="w-4 h-4" />
-            <span className="text-xs">Gerado em Mai/2026 · Fechamento Receptivo OPCO</span>
+            <span className="text-xs">Gerado em Mai/2026 · DRE-I OPCO</span>
           </div>
           <div className="flex gap-8 text-xs font-medium text-slate-400">
             <a href="#" className="hover:text-slate-900 transition-colors">Suporte</a>

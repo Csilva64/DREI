@@ -48,7 +48,7 @@ export default function AuthForm() {
         {/* Logo / Brand */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-            Fechamento Receptivo · <span className="text-orange-600">OPCO</span>
+            DRE-I · <span className="text-orange-600">OPCO</span>
           </h1>
           <p className="text-sm text-slate-500 mt-2">Acesso restrito ao painel interno</p>
         </div>

@@ -79,7 +79,7 @@ export async function exportPDF(
   doc.setTextColor(255, 255, 255)
   doc.setFontSize(16)
   doc.setFont('helvetica', 'bold')
-  doc.text('Fechamento Receptivo · OPCO', 14, 14)
+  doc.text('DRE-I · OPCO', 14, 14)
   doc.setFontSize(9)
   doc.setFont('helvetica', 'normal')
   doc.text(`Gerado em ${date}`, W - 14, 14, { align: 'right' })
@@ -182,7 +182,7 @@ export async function exportPDF(
     doc.setPage(i)
     doc.setFontSize(7)
     doc.setTextColor(...grey)
-    doc.text('OPCO Tours · Fechamento Receptivo · Confidencial', 14, 290)
+    doc.text('OPCO Tours · DRE-I · Confidencial', 14, 290)
     doc.text(`Página ${i} de ${pages}`, W - 14, 290, { align: 'right' })
   }
 
