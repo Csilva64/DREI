@@ -432,8 +432,6 @@ export default function App() {
           </div>
           <div className="flex gap-8 text-xs font-medium text-slate-400">
             <a href="#" className="hover:text-slate-900 transition-colors">Suporte</a>
-            <a href="#" className="hover:text-slate-900 transition-colors">Documetação</a>
-            <a href="#" className="hover:text-slate-900 transition-colors">Documentação</a>
           </div>
         </div>
       </footer>
