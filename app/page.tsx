@@ -34,6 +34,7 @@ import type { MonthlyRevenue, ClientData, OperatorPayout, DashboardKPIs } from '
 import { formatCurrency, formatPercent, cn } from '@/lib/utils';
 import RevenueModal from '@/components/RevenueModal';
 import ImportModal from '@/components/ImportModal';
+import { exportPDF } from '@/lib/export';
 
 const COLORS = ['#f97316', '#3b82f6', '#10b981', '#6366f1', '#a855f7'];
 
@@ -416,6 +417,12 @@ export default function App() {
                     className="w-full bg-white text-slate-900 py-3 rounded-xl font-bold text-sm hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center gap-2 group"
                   >
                     Importar Dados <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </button>
+                  <button
+                    onClick={() => exportPDF(REVENUE_DATA, CLIENT_DATA, OPERATOR_DATA, KPIS)}
+                    className="w-full bg-white/10 border border-white/20 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-white/20 transition-all flex items-center justify-center gap-2"
+                  >
+                    Exportar PDF
                   </button>
                 </div>
               </div>
