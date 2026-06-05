@@ -7,8 +7,13 @@ import { fetchBrandingBySlug } from '@/lib/tenant/branding'
 import { DEFAULT_BRANDING } from '@/lib/tenant'
 
 export const metadata: Metadata = {
-  title: 'DRE-I · Dashboard',
-  description: 'Dashboard de Receita',
+  title: 'DRE-I Painel',
+  description: 'DRE-I Painel',
+  openGraph: {
+    title: 'DRE-I Painel',
+    description: 'DRE-I Painel',
+    type: 'website',
+  },
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
