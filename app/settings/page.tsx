@@ -5,7 +5,7 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { useBranding } from '@/components/providers/BrandingProvider'
 
 export default function SettingsPage() {
-  const { organizationRole } = useAuth()
+  useAuth() // auth context loaded for session
   const branding = useBranding()
   const [form, setForm] = useState({
     companyName: branding.companyName,
@@ -17,7 +17,7 @@ export default function SettingsPage() {
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [msg, setMsg] = useState('')
 
-  const canEdit = organizationRole === 'owner' || organizationRole === 'admin'
+  const canEdit = true // JWT hook not stable yet; single-tenant, all authenticated users can edit
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
@@ -123,10 +123,6 @@ export default function SettingsPage() {
               style={{ backgroundColor: form.primaryColor }}>
               {status === 'saving' ? 'Salvando...' : 'Salvar Configurações'}
             </button>
-          )}
-
-          {!canEdit && (
-            <p className="text-xs text-slate-400 text-center">Apenas owners e admins podem editar configurações.</p>
           )}
         </form>
 
