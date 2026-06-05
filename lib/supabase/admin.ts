@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { OPCO_ORG_ID } from '@/lib/tenant'
 
 export function getAdmin() {
   return createClient(
@@ -14,16 +15,25 @@ export const supabaseAdmin = new Proxy({} as any, {
   },
 }) as ReturnType<typeof getAdmin>
 
-export async function verifyUser(authHeader: string | null): Promise<boolean> {
-  if (!authHeader?.startsWith('Bearer ')) return false
+export async function verifyUser(authHeader: string | null): Promise<{ valid: boolean; orgId: string | null }> {
+  if (!authHeader?.startsWith('Bearer ')) return { valid: false, orgId: null }
   const token = authHeader.slice(7)
   const { data, error } = await getAdmin().auth.getUser(token)
-  return !error && !!data.user
+  if (error || !data.user) return { valid: false, orgId: null }
+  // Extract org_id from JWT claims
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return { valid: true, orgId: payload.organization_id ?? null }
+  } catch {
+    return { valid: true, orgId: null }
+  }
 }
 
-export async function recalculateKPIs(): Promise<void> {
-  const { data: revenue } = await getAdmin().from('monthly_revenue' as any).select('*')
-  const { data: payouts } = await getAdmin().from('operator_payouts' as any).select('total')
+export async function recalculateKPIs(organizationId?: string): Promise<void> {
+  const admin = getAdmin()
+  const orgId = organizationId ?? OPCO_ORG_ID
+  const { data: revenue } = await (admin as any).from('monthly_revenue').select('*').eq('organization_id', orgId)
+  const { data: payouts } = await (admin as any).from('operator_payouts').select('total').eq('organization_id', orgId)
   if (!revenue?.length) return
   const totalRevenue = revenue.reduce((s: number, r: any) => s + Number(r.revenue), 0)
   const monthlyAverage = totalRevenue / revenue.length
@@ -32,8 +42,8 @@ export async function recalculateKPIs(): Promise<void> {
   const total2025 = revenue.filter((r: any) => Number(r.year) === 2025).reduce((s: number, r: any) => s + Number(r.revenue), 0)
   const total2026 = revenue.filter((r: any) => Number(r.year) === 2026).reduce((s: number, r: any) => s + Number(r.revenue), 0)
   const yoyGrowth = total2025 > 0 ? ((total2026 - total2025) / total2025) * 100 : 0
-  await getAdmin().from('dashboard_kpis' as any).upsert({
-    id: 1,
+  await (admin as any).from('dashboard_kpis').upsert({
+    organization_id: orgId,
     total_revenue: totalRevenue,
     best_month: best.month,
     best_month_value: Number(best.revenue),

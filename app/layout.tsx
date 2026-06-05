@@ -1,19 +1,41 @@
 import type { Metadata } from 'next'
+import { headers } from 'next/headers'
 import './globals.css'
 import { AuthProvider } from '@/components/providers/AuthProvider'
+import { BrandingProvider } from '@/components/providers/BrandingProvider'
+import { fetchBrandingBySlug } from '@/lib/tenant/branding'
+import { DEFAULT_BRANDING } from '@/lib/tenant'
 
 export const metadata: Metadata = {
-  title: 'DRE-I · OPCO',
-  description: 'Dashboard de Receita OPCO',
+  title: 'DRE-I · Dashboard',
+  description: 'Dashboard de Receita',
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Read tenant slug set by middleware
+  const headerList = await headers()
+  const tenantSlug = headerList.get('x-tenant-slug') ?? 'opco'
+
+  const branding = await fetchBrandingBySlug(tenantSlug)
+
   return (
-    <html lang="pt-BR">
+    <html lang={branding.locale}>
+      <head>
+        {branding.faviconUrl && <link rel="icon" href={branding.faviconUrl} />}
+        <title>{branding.companyName} · DRE-I</title>
+        <style>{`
+          :root {
+            --color-primary: ${branding.primaryColor};
+            --color-accent: ${branding.accentColor};
+          }
+        `}</style>
+      </head>
       <body>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <BrandingProvider branding={branding}>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </BrandingProvider>
       </body>
     </html>
   )
