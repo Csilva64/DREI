@@ -69,6 +69,7 @@ export default function App() {
   const { kpis, revenueData, clientData, operatorData, dataLoading, dataError, refetch } = useDashboardData();
   const [editRow, setEditRow] = useState<MonthlyRevenue | null | 'new'>(null);
   const [showImport, setShowImport] = useState(false);
+  const [exportingPDF, setExportingPDF] = useState(false);
 
   if (loading) {
     return (
@@ -419,10 +420,17 @@ export default function App() {
                     Importar Dados <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </button>
                   <button
-                    onClick={() => exportPDF(REVENUE_DATA, CLIENT_DATA, OPERATOR_DATA, KPIS)}
-                    className="w-full bg-white/10 border border-white/20 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-white/20 transition-all flex items-center justify-center gap-2"
+                    onClick={async () => {
+                      setExportingPDF(true)
+                      try { await exportPDF(REVENUE_DATA, CLIENT_DATA, OPERATOR_DATA, KPIS) }
+                      finally { setExportingPDF(false) }
+                    }}
+                    disabled={exportingPDF}
+                    className="w-full bg-white/10 border border-white/20 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-white/20 disabled:opacity-60 transition-all flex items-center justify-center gap-2"
                   >
-                    Exportar PDF
+                    {exportingPDF
+                      ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Gerando PDF...</>
+                      : 'Exportar PDF'}
                   </button>
                 </div>
               </div>
