@@ -2,19 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getStripe } from '@/lib/stripe/server'
 import { PLANS, type PlanKey } from '@/lib/stripe/config'
-import { createClient as createServerClient } from '@/lib/supabase/server'
+import { verifyUser } from '@/lib/supabase/admin'
 
 function getAdmin() {
   return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 }
 
 export async function POST(req: NextRequest) {
-  // Authenticated user only
-  const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { valid } = await verifyUser(req.headers.get('authorization'))
+  if (!valid) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { plan, organizationId } = await req.json()
+  const { plan, organizationId, email } = await req.json()
   if (!plan || !(plan in PLANS)) {
     return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
   }
@@ -27,7 +25,6 @@ export async function POST(req: NextRequest) {
   const admin = getAdmin()
   const stripe = getStripe()
 
-  // Find org
   const { data: org } = await (admin as any)
     .from('organizations')
     .select('id, name, stripe_customer_id')
@@ -36,11 +33,10 @@ export async function POST(req: NextRequest) {
 
   if (!org) return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
 
-  // Create or reuse Stripe customer
   let customerId = org.stripe_customer_id
   if (!customerId) {
     const customer = await stripe.customers.create({
-      email: user.email,
+      email: email ?? undefined,
       name: org.name,
       metadata: { organization_id: org.id },
     })

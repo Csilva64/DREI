@@ -2,6 +2,16 @@
 
 import { useState } from 'react'
 import { PLANS, type PlanKey } from '@/lib/stripe/config'
+import { createClient } from '@/lib/supabase/client'
+
+async function authHeaders() {
+  const supabase = createClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${session?.access_token ?? ''}`,
+  }
+}
 
 interface Org {
   id: string
@@ -28,7 +38,7 @@ export default function BillingClient({ org }: { org: Org }) {
     try {
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await authHeaders(),
         body: JSON.stringify({ plan, organizationId: org.id }),
       })
       const data = await res.json()
@@ -45,7 +55,7 @@ export default function BillingClient({ org }: { org: Org }) {
     try {
       const res = await fetch('/api/stripe/portal', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await authHeaders(),
         body: JSON.stringify({ organizationId: org.id }),
       })
       const data = await res.json()

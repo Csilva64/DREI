@@ -1,35 +1,52 @@
-import { createClient } from '@supabase/supabase-js'
-import { createClient as createServerClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+'use client'
+
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import BillingClient from './BillingClient'
 
-async function getOrgForUser(userId: string) {
-  const admin = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-  const { data: member } = await (admin as any)
-    .from('organization_members')
-    .select('organization_id, role')
-    .eq('user_id', userId)
-    .limit(1)
-    .single()
-
-  if (!member) return null
-
-  const { data: org } = await (admin as any)
-    .from('organizations')
-    .select('id, name, plan, subscription_status, trial_ends_at, current_period_end')
-    .eq('id', member.organization_id)
-    .single()
-
-  return { org, role: member.role }
+interface Org {
+  id: string
+  name: string
+  plan: string
+  subscription_status: string
+  trial_ends_at: string | null
+  current_period_end: string | null
 }
 
-export default async function BillingPage() {
-  const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/')
+export default function BillingPage() {
+  const [org, setOrg] = useState<Org | null>(null)
+  const [error, setError] = useState('')
 
-  const result = await getOrgForUser(user.id)
-  if (!result?.org) redirect('/')
+  useEffect(() => {
+    (async () => {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { window.location.href = '/'; return }
 
-  return <BillingClient org={result.org} />
+      const res = await fetch('/api/billing/me', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      })
+      const data = await res.json()
+      if (!res.ok) { setError(data.error); return }
+      setOrg(data.org)
+    })()
+  }, [])
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center text-red-500 text-sm">
+        {error}
+      </div>
+    )
+  }
+
+  if (!org) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
+        <span className="w-8 h-8 border-2 border-orange-200 border-t-orange-500 rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  return <BillingClient org={org} />
 }
