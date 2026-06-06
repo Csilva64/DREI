@@ -121,10 +121,16 @@ export async function POST(req: NextRequest) {
         const origin = process.env.NEXT_PUBLIC_APP_URL ?? 'https://dashboard.opcoia.com.br'
 
         if (flow === 'public') {
+          // Email: metadata may be empty string — use || and Stripe-collected email
+          const email = session.metadata?.email
+            || session.customer_email
+            || (session.customer_details as any)?.email
+            || ''
+          if (!email) throw new Error('No email in checkout session')
           // New self-serve customer — provision account + email
           await provisionPublicAccount({
-            email: session.metadata?.email ?? session.customer_email ?? '',
-            companyName: session.metadata?.company_name ?? '',
+            email,
+            companyName: session.metadata?.company_name || '',
             plan,
             customerId: session.customer as string,
             subscriptionId: session.subscription as string,
@@ -149,10 +155,12 @@ export async function POST(req: NextRequest) {
         const sub = event.data.object as Stripe.Subscription
         const priceId = sub.items.data[0]?.price.id
         const plan = priceId ? getPlanByPriceId(priceId) : null
+        const rawPeriodEnd = (sub as any).current_period_end ?? (sub.items.data[0] as any)?.current_period_end
+        const periodEnd = rawPeriodEnd ? new Date(rawPeriodEnd * 1000).toISOString() : null
         await updateOrgByCustomer(sub.customer as string, {
           subscription_status: sub.status,
           plan: plan ?? undefined,
-          current_period_end: new Date((sub as any).current_period_end * 1000).toISOString(),
+          current_period_end: periodEnd,
           stripe_subscription_id: sub.id,
         })
         break
