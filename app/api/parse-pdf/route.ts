@@ -35,8 +35,19 @@ Rules:
 `
 
 export async function POST(request: NextRequest) {
-  const authorized = await verifyUser(request.headers.get('authorization'))
-  if (!authorized) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { valid, orgId } = await verifyUser(request.headers.get('authorization'))
+  if (!valid) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // Server-side plan gating: PDF import requires Pro+
+  if (orgId) {
+    const { createClient } = await import('@supabase/supabase-js')
+    const { getFeatures } = await import('@/lib/stripe/config')
+    const admin = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+    const { data: org } = await (admin as any).from('organizations').select('plan').eq('id', orgId).single()
+    if (org && !getFeatures(org.plan).pdfImport) {
+      return NextResponse.json({ error: 'Importação por PDF disponível apenas nos planos Pro e Agência' }, { status: 403 })
+    }
+  }
 
   const { text } = await request.json()
   if (!text || typeof text !== 'string' || text.trim().length < 10) {

@@ -1,12 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useBranding } from '@/components/providers/BrandingProvider'
+import { useSubscription } from '@/components/providers/SubscriptionProvider'
 
 export default function SettingsPage() {
   useAuth() // auth context loaded for session
   const branding = useBranding()
+  const subscription = useSubscription()
+  const canCustomDomain = subscription.features.customDomain
   const [form, setForm] = useState({
     companyName: branding.companyName,
     primaryColor: branding.primaryColor,
@@ -93,8 +96,13 @@ export default function SettingsPage() {
             <label className={lbl}>Domínio Personalizado</label>
             <input className={inp} value={form.customDomain}
               onChange={e => setForm(f => ({ ...f, customDomain: e.target.value }))}
-              placeholder="dashboard.minhaempresa.com" disabled={!canEdit} />
-            {form.customDomain && (
+              placeholder="dashboard.minhaempresa.com" disabled={!canEdit || !canCustomDomain} />
+            {!canCustomDomain && (
+              <p className="text-xs text-amber-600 mt-1">
+                Domínio próprio disponível apenas no plano <strong>Agência</strong>. <a href="/billing" className="underline font-semibold">Fazer upgrade</a>
+              </p>
+            )}
+            {canCustomDomain && form.customDomain && (
               <p className="text-xs text-slate-500 mt-1">
                 Adicione CNAME: <code className="bg-slate-100 px-1 rounded">{form.customDomain}</code> → <code className="bg-slate-100 px-1 rounded">cname.vercel-dns.com</code>
               </p>

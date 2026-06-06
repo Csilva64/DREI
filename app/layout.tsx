@@ -3,6 +3,7 @@ import { headers } from 'next/headers'
 import './globals.css'
 import { AuthProvider } from '@/components/providers/AuthProvider'
 import { BrandingProvider } from '@/components/providers/BrandingProvider'
+import { SubscriptionProvider } from '@/components/providers/SubscriptionProvider'
 import { fetchBrandingBySlug } from '@/lib/tenant/branding'
 import { DEFAULT_BRANDING } from '@/lib/tenant'
 
@@ -38,7 +39,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <BrandingProvider branding={branding}>
           <AuthProvider>
-            {children}
+            <SubscriptionProvider>
+              {children}
+            </SubscriptionProvider>
           </AuthProvider>
         </BrandingProvider>
       </body>

@@ -35,6 +35,7 @@ import { formatCurrency, formatPercent, cn } from '@/lib/utils';
 import RevenueModal from '@/components/RevenueModal';
 import ImportModal from '@/components/ImportModal';
 import { exportPDF } from '@/lib/export';
+import { useSubscription } from '@/components/providers/SubscriptionProvider';
 
 const COLORS = ['#f97316', '#3b82f6', '#10b981', '#6366f1', '#a855f7'];
 
@@ -66,6 +67,7 @@ function useDashboardData() {
 export default function App() {
   const [activeTab, setActiveTab] = useState<'overview' | 'payouts'>('overview');
   const { session, loading, signOut } = useAuth();
+  const subscription = useSubscription();
   const { kpis, revenueData, clientData, operatorData, dataLoading, dataError, refetch } = useDashboardData();
   const [editRow, setEditRow] = useState<MonthlyRevenue | null | 'new'>(null);
   const [showImport, setShowImport] = useState(false);
@@ -81,6 +83,29 @@ export default function App() {
 
   if (!session) {
     return <AuthForm />;
+  }
+
+  // Block access if trial expired and no active subscription
+  if (!subscription.loading && !subscription.active) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 max-w-md text-center space-y-4">
+          <div className="w-14 h-14 bg-orange-50 rounded-full flex items-center justify-center mx-auto">
+            <svg className="w-7 h-7 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          </div>
+          <h1 className="text-xl font-bold text-slate-900">Período de teste encerrado</h1>
+          <p className="text-sm text-slate-500">
+            Seu teste gratuito acabou. Assine um plano para continuar acessando o dashboard.
+          </p>
+          <a href="/billing" className="block w-full py-3 rounded-xl bg-orange-500 text-white font-bold text-sm hover:bg-orange-600 transition-colors">
+            Ver Planos
+          </a>
+          <button onClick={signOut} className="text-xs text-slate-400 hover:text-slate-600 transition-colors">
+            Sair
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (dataLoading) {

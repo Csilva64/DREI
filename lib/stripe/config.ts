@@ -39,3 +39,52 @@ export function getPlanByPriceId(priceId: string): PlanKey | null {
   const entry = Object.values(PLANS).find(p => p.priceId === priceId)
   return entry?.key ?? null
 }
+
+// ─── Feature gating ─────────────────────────────────────────────────────────
+
+export interface PlanFeatures {
+  pdfImport: boolean       // import via PDF + IA
+  apiIngest: boolean       // x-api-key ingest endpoint
+  maxCompanies: number     // org limit
+  whiteLabel: boolean      // logo + colors
+  customDomain: boolean    // own domain
+}
+
+export const PLAN_FEATURES: Record<PlanKey, PlanFeatures> = {
+  starter: {
+    pdfImport: false,
+    apiIngest: false,
+    maxCompanies: 1,
+    whiteLabel: false,
+    customDomain: false,
+  },
+  pro: {
+    pdfImport: true,
+    apiIngest: true,
+    maxCompanies: 3,
+    whiteLabel: true,
+    customDomain: false,
+  },
+  enterprise: {
+    pdfImport: true,
+    apiIngest: true,
+    maxCompanies: Infinity,
+    whiteLabel: true,
+    customDomain: true,
+  },
+}
+
+export function getFeatures(plan: string): PlanFeatures {
+  return PLAN_FEATURES[(plan as PlanKey)] ?? PLAN_FEATURES.starter
+}
+
+// Active = paying or in valid trial
+export function isSubscriptionActive(status: string, trialEndsAt: string | null): boolean {
+  if (status === 'active' || status === 'trialing') {
+    if (status === 'trialing' && trialEndsAt) {
+      return new Date(trialEndsAt).getTime() > Date.now()
+    }
+    return true
+  }
+  return false
+}

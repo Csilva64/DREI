@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { useSubscription } from '@/components/providers/SubscriptionProvider'
 import { Upload, X, CheckCircle, AlertCircle, FileText, Sparkles, Eye } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
@@ -45,6 +46,7 @@ async function extractPDFText(file: File): Promise<string> {
 }
 
 export default function ImportModal({ onClose, onImported }: Props) {
+  const subscription = useSubscription()
   const [table, setTable] = useState<TableValue>('monthly_revenue')
   const [file, setFile] = useState<File | null>(null)
   const [step, setStep] = useState<Step>('select')
@@ -54,9 +56,16 @@ export default function ImportModal({ onClose, onImported }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const isPDF = file?.name.toLowerCase().endsWith('.pdf')
+  const canUsePDF = subscription.features.pdfImport
 
   async function handleAction() {
     if (!file) return
+
+    if (isPDF && !canUsePDF) {
+      setMessage('Importação por PDF disponível apenas nos planos Pro e Agência. Faça upgrade em /billing.')
+      setStep('error')
+      return
+    }
 
     try {
       const { data: { session } } = await createClient().auth.getSession()
@@ -230,10 +239,17 @@ export default function ImportModal({ onClose, onImported }: Props) {
                   onChange={e => { setFile(e.target.files?.[0] ?? null); setStep('select') }} />
               </div>
 
-              {isPDF && (
+              {isPDF && canUsePDF && (
                 <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-xl text-blue-700 text-xs">
                   <Sparkles className="w-4 h-4 flex-shrink-0 mt-0.5" />
                   <span>PDF será interpretado com IA. Você poderá revisar os dados antes de confirmar a importação.</span>
+                </div>
+              )}
+
+              {isPDF && !canUsePDF && (
+                <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-xs">
+                  <Sparkles className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span>Importação por PDF com IA disponível nos planos <strong>Pro</strong> e <strong>Agência</strong>. <a href="/billing" className="underline font-semibold">Fazer upgrade</a></span>
                 </div>
               )}
 
