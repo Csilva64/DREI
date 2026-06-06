@@ -153,9 +153,10 @@ CREATE POLICY "Org write kpis"
   USING (organization_id = (auth.jwt() ->> 'organization_id')::UUID)
   WITH CHECK (organization_id = (auth.jwt() ->> 'organization_id')::UUID);
 
--- 9. JWT Custom Claims Hook
+-- 9. JWT Custom Claims Hook (schema PUBLIC — SQL Editor tem permissão aqui)
+-- Após executar: Supabase → Authentication → Hooks → apontar para public.custom_access_token_hook
 
-CREATE OR REPLACE FUNCTION auth.custom_access_token_hook(event JSONB)
+CREATE OR REPLACE FUNCTION public.custom_access_token_hook(event JSONB)
 RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE
   claims    JSONB;
@@ -182,5 +183,6 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION auth.custom_access_token_hook TO supabase_auth_admin;
-REVOKE EXECUTE ON FUNCTION auth.custom_access_token_hook FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.custom_access_token_hook TO supabase_auth_admin;
+GRANT EXECUTE ON FUNCTION public.custom_access_token_hook TO authenticated;
+GRANT EXECUTE ON FUNCTION public.custom_access_token_hook TO anon;
