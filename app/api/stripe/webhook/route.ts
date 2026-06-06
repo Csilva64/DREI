@@ -78,12 +78,14 @@ async function provisionPublicAccount(opts: {
   const loginUrl = (link as any)?.properties?.action_link ?? `${opts.origin}/`
 
   // 4. Welcome email
+  console.log('[provision] sending welcome email to', opts.email)
   await sendWelcomeEmail({
     to: opts.email,
     companyName: opts.companyName || slug,
     loginUrl,
     plan: opts.plan,
   })
+  console.log('[provision] done for', opts.email, 'org', org.id)
 }
 
 // Stripe needs the raw body for signature verification
@@ -173,6 +175,7 @@ export async function POST(req: NextRequest) {
       }
     }
   } catch (err: any) {
+    console.error('[stripe-webhook] handler error:', event.type, err?.message, err?.stack)
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 
