@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
       metadata: { organization_id: org.id, plan },
     },
     metadata: { organization_id: org.id, plan },
-    success_url: `${origin}/billing?success=true`,
+    success_url: `${origin}/?subscribed=true`,
     cancel_url: `${origin}/billing?canceled=true`,
     locale: 'pt-BR',
     allow_promotion_codes: true,
