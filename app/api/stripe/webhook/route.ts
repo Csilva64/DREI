@@ -2,10 +2,88 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getStripe } from '@/lib/stripe/server'
 import { getPlanByPriceId } from '@/lib/stripe/config'
+import { sendWelcomeEmail } from '@/lib/email/resend'
 import type Stripe from 'stripe'
 
 function getAdmin() {
   return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+}
+
+function slugify(s: string): string {
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'empresa'
+}
+
+// Provision a brand-new account from a public checkout (no prior signup)
+async function provisionPublicAccount(opts: {
+  email: string
+  companyName: string
+  plan: string
+  customerId: string
+  subscriptionId: string
+  origin: string
+}) {
+  const admin = getAdmin()
+
+  // 1. Create or find user
+  let userId: string
+  const { data: existing } = await admin.auth.admin.listUsers()
+  const found = (existing?.users as any[])?.find((u: any) => u.email === opts.email)
+  if (found) {
+    userId = found.id
+  } else {
+    const { data: created, error } = await admin.auth.admin.createUser({
+      email: opts.email,
+      email_confirm: true,
+    })
+    if (error || !created.user) throw new Error(`createUser: ${error?.message}`)
+    userId = created.user.id
+  }
+
+  // 2. Create org (unique slug)
+  const base = slugify(opts.companyName || opts.email.split('@')[0])
+  let slug = base
+  for (let i = 1; ; i++) {
+    const { data: clash } = await (admin as any).from('organizations').select('id').eq('slug', slug).single()
+    if (!clash) break
+    slug = `${base}-${i}`
+  }
+
+  const { data: org, error: orgErr } = await (admin as any).from('organizations').insert({
+    name: opts.companyName || opts.email.split('@')[0],
+    slug,
+    plan: opts.plan,
+    subscription_status: 'active',
+    stripe_customer_id: opts.customerId,
+    stripe_subscription_id: opts.subscriptionId,
+  }).select().single()
+  if (orgErr) throw new Error(`createOrg: ${orgErr.message}`)
+
+  await (admin as any).from('organization_branding').insert({
+    organization_id: org.id,
+    company_name: opts.companyName || slug,
+  })
+  await (admin as any).from('organization_members').insert({
+    organization_id: org.id,
+    user_id: userId,
+    role: 'owner',
+  })
+
+  // 3. Magic link
+  const { data: link } = await admin.auth.admin.generateLink({
+    type: 'magiclink',
+    email: opts.email,
+    options: { redirectTo: `${opts.origin}/` },
+  })
+  const loginUrl = (link as any)?.properties?.action_link ?? `${opts.origin}/`
+
+  // 4. Welcome email
+  await sendWelcomeEmail({
+    to: opts.email,
+    companyName: opts.companyName || slug,
+    loginUrl,
+    plan: opts.plan,
+  })
 }
 
 // Stripe needs the raw body for signature verification
@@ -36,14 +114,30 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session
-        const orgId = session.metadata?.organization_id
-        const plan = session.metadata?.plan
-        if (orgId) {
-          await (admin as any).from('organizations').update({
-            stripe_subscription_id: session.subscription as string,
-            subscription_status: 'active',
-            plan: plan ?? undefined,
-          }).eq('id', orgId)
+        const flow = session.metadata?.flow
+        const plan = session.metadata?.plan ?? 'starter'
+        const origin = process.env.NEXT_PUBLIC_APP_URL ?? 'https://dashboard.opcoia.com.br'
+
+        if (flow === 'public') {
+          // New self-serve customer — provision account + email
+          await provisionPublicAccount({
+            email: session.metadata?.email ?? session.customer_email ?? '',
+            companyName: session.metadata?.company_name ?? '',
+            plan,
+            customerId: session.customer as string,
+            subscriptionId: session.subscription as string,
+            origin,
+          })
+        } else {
+          // Existing org upgrading
+          const orgId = session.metadata?.organization_id
+          if (orgId) {
+            await (admin as any).from('organizations').update({
+              stripe_subscription_id: session.subscription as string,
+              subscription_status: 'active',
+              plan,
+            }).eq('id', orgId)
+          }
         }
         break
       }
