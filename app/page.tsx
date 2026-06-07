@@ -475,7 +475,7 @@ export default function App() {
                     onClick={() => setShowImport(true)}
                     className="w-full bg-white text-slate-900 py-3 rounded-xl font-bold text-sm hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center gap-2 group"
                   >
-                    Importar Dados <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    Importar Dados
                   </button>
                   <button
                     onClick={async () => {
