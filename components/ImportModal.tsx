@@ -202,6 +202,56 @@ export default function ImportModal({ onClose, onImported }: Props) {
         }
       }
 
+      // ── Cross-file aggregation (dedup + sum) before importing ──
+      // monthly_revenue: one row per month (sum numeric fields)
+      if (buckets.monthly_revenue.length) {
+        const byMonth = new Map<string, any>()
+        for (const r of buckets.monthly_revenue) {
+          const key = String(r.month ?? '').trim() || 'Unknown'
+          const cur = byMonth.get(key) ?? { month: key, year: Number(r.year) || 0, revenue: 0, opco: 0, sabrina: 0, giovani: 0, gabriella: 0 }
+          cur.year = Number(r.year) || cur.year
+          cur.revenue += Number(r.revenue) || 0
+          cur.opco += Number(r.opco) || 0
+          cur.sabrina += Number(r.sabrina) || 0
+          cur.giovani += Number(r.giovani) || 0
+          cur.gabriella += Number(r.gabriella) || 0
+          byMonth.set(key, cur)
+        }
+        const months = [...byMonth.values()]
+        const maxRev = Math.max(...months.map(m => m.revenue))
+        buckets.monthly_revenue = months.map((m, i) => ({ ...m, sort_order: i, is_highlight: m.revenue === maxRev }))
+      }
+
+      // client_data: dedup by name, sum revenue, top 5, recompute rank + percentage
+      if (buckets.client_data.length) {
+        const byName = new Map<string, number>()
+        for (const c of buckets.client_data) {
+          const name = String(c.name ?? '').trim()
+          if (!name) continue
+          byName.set(name, (byName.get(name) ?? 0) + (Number(c.revenue) || 0))
+        }
+        const sorted = [...byName.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5)
+        const totalRev = sorted.reduce((s, [, v]) => s + v, 0) || 1
+        buckets.client_data = sorted.map(([name, revenue], i) => ({
+          rank: i + 1, name, revenue, percentage: Math.round((revenue / totalRev) * 1000) / 10,
+        }))
+      }
+
+      // operator_payouts: dedup by name, sum total, recompute percentage
+      if (buckets.operator_payouts.length) {
+        const byOp = new Map<string, number>()
+        for (const o of buckets.operator_payouts) {
+          const name = String(o.name ?? '').trim()
+          if (!name) continue
+          byOp.set(name, (byOp.get(name) ?? 0) + (Number(o.total) || 0))
+        }
+        const ops = [...byOp.entries()]
+        const totalOps = ops.reduce((s, [, v]) => s + v, 0) || 1
+        buckets.operator_payouts = ops.map(([name, total], i) => ({
+          sort_order: i, name, total, percentage: Math.round((total / totalOps) * 1000) / 10,
+        }))
+      }
+
       // One import call per non-empty bucket (combined rows = single replace)
       let totalTables = 0
       for (const t of TABLES) {
