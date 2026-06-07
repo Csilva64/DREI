@@ -1,34 +1,53 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { useBranding } from '@/components/providers/BrandingProvider'
 import { useSubscription } from '@/components/providers/SubscriptionProvider'
 
 export default function SettingsPage() {
   useAuth() // auth context loaded for session
-  const branding = useBranding()
   const subscription = useSubscription()
   const canCustomDomain = subscription.features.customDomain
   const [form, setForm] = useState({
-    companyName: branding.companyName,
-    primaryColor: branding.primaryColor,
-    accentColor: branding.accentColor,
-    logoUrl: branding.logoUrl ?? '',
-    customDomain: branding.customDomain ?? '',
+    companyName: '',
+    primaryColor: '#f97316',
+    accentColor: '#3b82f6',
+    logoUrl: '',
+    customDomain: '',
   })
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [msg, setMsg] = useState('')
 
-  const canEdit = true // JWT hook not stable yet; single-tenant, all authenticated users can edit
+  // Populate form from the logged-in org's branding when it loads
+  useEffect(() => {
+    if (subscription.branding) {
+      setForm(f => ({
+        ...f,
+        companyName: subscription.branding!.companyName,
+        primaryColor: subscription.branding!.primaryColor,
+        accentColor: subscription.branding!.accentColor,
+        logoUrl: subscription.branding!.logoUrl ?? '',
+      }))
+    }
+  }, [subscription.branding])
+
+  // owner/admin can edit; default allow while loading
+  const canEdit = !subscription.role || ['owner', 'admin'].includes(subscription.role)
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     setStatus('saving')
     try {
+      const { createClient } = await import('@/lib/supabase/client')
+      const { data: { session } } = await createClient().auth.getSession()
+      if (!session) throw new Error('Sessão expirada. Faça login novamente.')
+
       const res = await fetch('/api/settings/branding', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify(form),
       })
       const data = await res.json()

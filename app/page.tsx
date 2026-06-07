@@ -29,7 +29,6 @@ import {
   Pie
 } from 'recharts';
 import { motion, AnimatePresence } from 'motion/react';
-import { fetchKPIs, fetchRevenueData, fetchClientData, fetchOperatorData } from '@/lib/queries';
 import type { MonthlyRevenue, ClientData, OperatorPayout, DashboardKPIs } from '@/types';
 import { formatCurrency, formatPercent, cn } from '@/lib/utils';
 import RevenueModal from '@/components/RevenueModal';
@@ -50,15 +49,26 @@ function useDashboardData() {
 
   useEffect(() => {
     setDataLoading(true);
-    Promise.all([fetchKPIs(), fetchRevenueData(), fetchClientData(), fetchOperatorData()])
-      .then(([k, r, c, o]) => {
-        setKpis(k);
-        setRevenueData(r);
-        setClientData(c);
-        setOperatorData(o);
-      })
-      .catch(err => setDataError(err.message ?? 'Erro ao carregar dados'))
-      .finally(() => setDataLoading(false));
+    (async () => {
+      try {
+        const { createClient } = await import('@/lib/supabase/client');
+        const { data: { session } } = await createClient().auth.getSession();
+        if (!session) { setDataLoading(false); return; }
+        const res = await fetch('/api/dashboard', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error ?? 'Erro ao carregar dados');
+        setKpis(data.kpis);
+        setRevenueData(data.revenueData);
+        setClientData(data.clientData);
+        setOperatorData(data.operatorData);
+      } catch (err: any) {
+        setDataError(err.message ?? 'Erro ao carregar dados');
+      } finally {
+        setDataLoading(false);
+      }
+    })();
   }, [tick]);
 
   return { kpis, revenueData, clientData, operatorData, dataLoading, dataError, refetch: () => setTick(t => t + 1) };
@@ -135,13 +145,17 @@ export default function App() {
       <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-3">
-            <img src="/logo.png.jpg" alt="OPCO" className="h-10 w-auto" />
+            {subscription.branding?.logoUrl
+              ? <img src={subscription.branding.logoUrl} alt={subscription.branding.companyName} className="h-10 w-auto" />
+              : <img src="/logo.png.jpg" alt="logo" className="h-10 w-auto" />}
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                DRE-I · <span className="text-orange-600">OPCO</span>
+                DRE-I · <span style={{ color: subscription.branding?.primaryColor ?? '#ea580c' }}>
+                  {subscription.branding?.companyName ?? 'Dashboard'}
+                </span>
               </h1>
               <p className="text-sm text-slate-500 font-medium">
-                Abr/2025 – Abr/2026 · Atualizado em Mai/2026
+                Painel financeiro
               </p>
             </div>
           </div>

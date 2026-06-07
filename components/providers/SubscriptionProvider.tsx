@@ -4,6 +4,13 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { createClient } from '@/lib/supabase/client'
 import { getFeatures, isSubscriptionActive, type PlanFeatures } from '@/lib/stripe/config'
 
+interface Branding {
+  companyName: string
+  logoUrl: string | null
+  primaryColor: string
+  accentColor: string
+}
+
 interface SubscriptionInfo {
   loading: boolean
   plan: string
@@ -12,11 +19,13 @@ interface SubscriptionInfo {
   active: boolean
   features: PlanFeatures
   organizationId: string | null
+  role: string | null
+  branding: Branding | null
 }
 
 const defaultFeatures = getFeatures('starter')
 
-const SubscriptionContext = createContext<SubscriptionInfo>({
+const initial: SubscriptionInfo = {
   loading: true,
   plan: 'starter',
   status: 'trialing',
@@ -24,18 +33,14 @@ const SubscriptionContext = createContext<SubscriptionInfo>({
   active: true,
   features: defaultFeatures,
   organizationId: null,
-})
+  role: null,
+  branding: null,
+}
+
+const SubscriptionContext = createContext<SubscriptionInfo>(initial)
 
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
-  const [info, setInfo] = useState<SubscriptionInfo>({
-    loading: true,
-    plan: 'starter',
-    status: 'trialing',
-    trialEndsAt: null,
-    active: true,
-    features: defaultFeatures,
-    organizationId: null,
-  })
+  const [info, setInfo] = useState<SubscriptionInfo>(initial)
 
   useEffect(() => {
     (async () => {
@@ -49,7 +54,20 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         })
         if (!res.ok) { setInfo(i => ({ ...i, loading: false })); return }
 
-        const { org } = await res.json()
+        const { org, role, branding } = await res.json()
+        const b: Branding | null = branding ? {
+          companyName: branding.company_name,
+          logoUrl: branding.logo_url ?? null,
+          primaryColor: branding.primary_color ?? '#f97316',
+          accentColor: branding.accent_color ?? '#3b82f6',
+        } : null
+
+        // Apply branding CSS vars live (per logged-in org, overrides host-based)
+        if (b) {
+          document.documentElement.style.setProperty('--color-primary', b.primaryColor)
+          document.documentElement.style.setProperty('--color-accent', b.accentColor)
+        }
+
         setInfo({
           loading: false,
           plan: org.plan,
@@ -58,6 +76,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
           active: isSubscriptionActive(org.subscription_status, org.trial_ends_at),
           features: getFeatures(org.plan),
           organizationId: org.id,
+          role: role ?? null,
+          branding: b,
         })
       } catch {
         setInfo(i => ({ ...i, loading: false }))

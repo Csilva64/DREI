@@ -1,23 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createClient } from '@supabase/supabase-js'
+import { verifyUser } from '@/lib/supabase/admin'
 
 export async function PATCH(req: NextRequest) {
-  const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const token = (await supabase.auth.getSession()).data.session?.access_token ?? ''
-  let orgId: string | null = null
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]))
-    const role = payload.organization_role
-    orgId = payload.organization_id
-    if (!orgId || !['owner', 'admin'].includes(role)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-  } catch {
-    return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
+  const { valid, orgId, role } = await verifyUser(req.headers.get('authorization'))
+  if (!valid) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!orgId) return NextResponse.json({ error: 'No organization' }, { status: 404 })
+  if (!['owner', 'admin'].includes(role ?? '')) {
+    return NextResponse.json({ error: 'Apenas owners e admins podem editar' }, { status: 403 })
   }
 
   const { companyName, primaryColor, accentColor, logoUrl, customDomain } = await req.json()

@@ -4,9 +4,8 @@ import { useState, type ReactNode } from 'react';
 import { X, Trash2, Save } from 'lucide-react';
 import type { MonthlyRevenue } from '@/types';
 import { upsertRevenueRow, deleteRevenueRow } from '@/lib/mutations';
-import { useAuth } from '@/components/providers/AuthProvider';
+import { useSubscription } from '@/components/providers/SubscriptionProvider';
 import { cn } from '@/lib/utils';
-import { OPCO_ORG_ID } from '@/lib/tenant';
 
 interface Props {
   row: MonthlyRevenue | null; // null = novo
@@ -16,7 +15,7 @@ interface Props {
 }
 
 export default function RevenueModal({ row, sortOrder, onClose, onSaved }: Props) {
-  const { organizationId } = useAuth();
+  const { organizationId } = useSubscription();
   const isNew = !row?.id;
 
   const [form, setForm] = useState({
@@ -41,7 +40,8 @@ export default function RevenueModal({ row, sortOrder, onClose, onSaved }: Props
     setSaving(true);
     setError(null);
     try {
-      await upsertRevenueRow({ ...form, id: row?.id, sortOrder: row?.id ? (row as any).sortOrder ?? sortOrder : sortOrder }, organizationId ?? OPCO_ORG_ID);
+      if (!organizationId) throw new Error('Organização não carregada. Recarregue a página.');
+      await upsertRevenueRow({ ...form, id: row?.id, sortOrder: row?.id ? (row as any).sortOrder ?? sortOrder : sortOrder }, organizationId);
       onSaved();
       onClose();
     } catch (e: any) {

@@ -69,13 +69,13 @@ async function provisionPublicAccount(opts: {
     role: 'owner',
   })
 
-  // 3. Magic link
+  // 3. Magic link — land on /settings for first-time branding setup
   const { data: link } = await admin.auth.admin.generateLink({
     type: 'magiclink',
     email: opts.email,
-    options: { redirectTo: `${opts.origin}/` },
+    options: { redirectTo: `${opts.origin}/settings` },
   })
-  const loginUrl = (link as any)?.properties?.action_link ?? `${opts.origin}/`
+  const loginUrl = (link as any)?.properties?.action_link ?? `${opts.origin}/settings`
 
   // 4. Welcome email
   console.log('[provision] sending welcome email to', opts.email)

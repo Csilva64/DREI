@@ -15,17 +15,32 @@ export const supabaseAdmin = new Proxy({} as any, {
   },
 }) as ReturnType<typeof getAdmin>
 
-export async function verifyUser(authHeader: string | null): Promise<{ valid: boolean; orgId: string | null }> {
-  if (!authHeader?.startsWith('Bearer ')) return { valid: false, orgId: null }
+export async function verifyUser(authHeader: string | null): Promise<{
+  valid: boolean
+  userId: string | null
+  orgId: string | null
+  role: string | null
+}> {
+  if (!authHeader?.startsWith('Bearer ')) return { valid: false, userId: null, orgId: null, role: null }
   const token = authHeader.slice(7)
-  const { data, error } = await getAdmin().auth.getUser(token)
-  if (error || !data.user) return { valid: false, orgId: null }
-  // Extract org_id from JWT claims
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]))
-    return { valid: true, orgId: payload.organization_id ?? null }
-  } catch {
-    return { valid: true, orgId: null }
+  const admin = getAdmin()
+  const { data, error } = await admin.auth.getUser(token)
+  if (error || !data.user) return { valid: false, userId: null, orgId: null, role: null }
+
+  // Resolve org from DB (reliable — no dependency on JWT hook)
+  const { data: member } = await (admin as any)
+    .from('organization_members')
+    .select('organization_id, role')
+    .eq('user_id', data.user.id)
+    .order('role')
+    .limit(1)
+    .maybeSingle()
+
+  return {
+    valid: true,
+    userId: data.user.id,
+    orgId: member?.organization_id ?? null,
+    role: member?.role ?? null,
   }
 }
 
