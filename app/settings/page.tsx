@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useSubscription } from '@/components/providers/SubscriptionProvider'
+import { createClient } from '@/lib/supabase/client'
+import { cn } from '@/lib/utils'
 
 export default function SettingsPage() {
   useAuth() // auth context loaded for session
@@ -17,6 +19,35 @@ export default function SettingsPage() {
   })
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [msg, setMsg] = useState('')
+  const [uploading, setUploading] = useState(false)
+
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    setMsg('')
+    try {
+      const { data: { session } } = await createClient().auth.getSession()
+      if (!session) throw new Error('Sessão expirada')
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/settings/logo', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: fd,
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setForm(f => ({ ...f, logoUrl: data.logoUrl }))
+      setStatus('saved')
+      setMsg('Logo enviado. Recarregue para ver no dashboard.')
+    } catch (err: any) {
+      setStatus('error')
+      setMsg(err.message ?? 'Erro ao enviar logo')
+    } finally {
+      setUploading(false)
+    }
+  }
 
   // Populate form from the logged-in org's branding when it loads
   useEffect(() => {
@@ -105,10 +136,23 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className={lbl}>URL do Logo</label>
-            <input className={inp} type="url" value={form.logoUrl}
-              onChange={e => setForm(f => ({ ...f, logoUrl: e.target.value }))}
-              placeholder="https://..." disabled={!canEdit} />
+            <label className={lbl}>Logo</label>
+            <div className="flex items-center gap-3">
+              {form.logoUrl && (
+                <img src={form.logoUrl} alt="logo" className="h-12 w-12 object-contain rounded-lg border border-slate-200 bg-white p-1"
+                  onError={e => (e.currentTarget.style.display = 'none')} />
+              )}
+              <label className={cn(
+                "flex-1 cursor-pointer text-center py-2.5 rounded-lg border border-dashed text-sm font-semibold transition-colors",
+                canEdit ? "border-slate-300 text-slate-600 hover:border-orange-400 hover:text-orange-600" : "border-slate-200 text-slate-300 cursor-not-allowed"
+              )}>
+                {uploading ? 'Enviando...' : (form.logoUrl ? 'Trocar logo' : 'Enviar logo')}
+                <input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp,image/gif"
+                  className="hidden" disabled={!canEdit || uploading}
+                  onChange={handleLogoUpload} />
+              </label>
+            </div>
+            <p className="text-xs text-slate-400 mt-1">PNG, JPG, SVG, WEBP ou GIF · máx. 2 MB</p>
           </div>
 
           <div>

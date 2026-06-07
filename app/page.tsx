@@ -146,8 +146,13 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-3">
             {subscription.branding?.logoUrl
-              ? <img src={subscription.branding.logoUrl} alt={subscription.branding.companyName} className="h-10 w-auto" />
-              : <img src="/logo.png.jpg" alt="logo" className="h-10 w-auto" />}
+              ? <img src={subscription.branding.logoUrl} alt={subscription.branding.companyName} className="h-10 w-auto max-w-[160px] object-contain" />
+              : (
+                <div className="h-10 w-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
+                  style={{ backgroundColor: subscription.branding?.primaryColor ?? '#f97316' }}>
+                  {(subscription.branding?.companyName ?? 'D').charAt(0).toUpperCase()}
+                </div>
+              )}
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-slate-900">
                 DRE-I · <span style={{ color: subscription.branding?.primaryColor ?? '#ea580c' }}>
