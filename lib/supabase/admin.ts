@@ -27,12 +27,14 @@ export async function verifyUser(authHeader: string | null): Promise<{
   const { data, error } = await admin.auth.getUser(token)
   if (error || !data.user) return { valid: false, userId: null, orgId: null, role: null }
 
-  // Resolve org from DB (reliable — no dependency on JWT hook)
+  // Resolve org from DB (reliable — no dependency on JWT hook).
+  // Order by created_at DESC so the user's OWN org (newest membership) wins
+  // deterministically over the seeded OPCO membership.
   const { data: member } = await (admin as any)
     .from('organization_members')
-    .select('organization_id, role')
+    .select('organization_id, role, created_at')
     .eq('user_id', data.user.id)
-    .order('role')
+    .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
 
