@@ -50,12 +50,13 @@ export async function recalculateKPIs(organizationId?: string): Promise<void> {
   const admin = getAdmin()
   const orgId = organizationId ?? OPCO_ORG_ID
   const { data: revenue } = await (admin as any).from('monthly_revenue').select('*').eq('organization_id', orgId)
-  const { data: payouts } = await (admin as any).from('operator_payouts').select('total').eq('organization_id', orgId)
   if (!revenue?.length) return
   const totalRevenue = revenue.reduce((s: number, r: any) => s + Number(r.revenue), 0)
   const monthlyAverage = totalRevenue / revenue.length
   const best = revenue.reduce((a: any, b: any) => Number(a.revenue) > Number(b.revenue) ? a : b)
-  const totalPayouts = payouts?.reduce((s: number, p: any) => s + Number(p.total), 0) ?? 0
+  // Total repasses = sum of operator columns across months (matches the table/pie)
+  const totalPayouts = revenue.reduce((s: number, r: any) =>
+    s + Number(r.opco) + Number(r.sabrina) + Number(r.giovani) + Number(r.gabriella), 0)
   const total2025 = revenue.filter((r: any) => Number(r.year) === 2025).reduce((s: number, r: any) => s + Number(r.revenue), 0)
   const total2026 = revenue.filter((r: any) => Number(r.year) === 2026).reduce((s: number, r: any) => s + Number(r.revenue), 0)
   const yoyGrowth = total2025 > 0 ? ((total2026 - total2025) / total2025) * 100 : 0

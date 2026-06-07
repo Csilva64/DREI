@@ -61,9 +61,19 @@ export async function GET(req: NextRequest) {
     rank: row.rank, name: row.name, revenue: Number(row.revenue), percentage: Number(row.percentage),
   }))
 
-  const operatorData = (opRes.data ?? []).map((row: any) => ({
-    name: row.name, total: Number(row.total), percentage: Number(row.percentage),
-  }))
+  // Derive operator distribution from the monthly columns so the pie ALWAYS
+  // reconciles with the monthly table (single source of truth).
+  const sums = revenueData.reduce((acc: any, r: any) => {
+    acc.opco += r.opco; acc.sabrina += r.sabrina; acc.giovani += r.giovani; acc.gabriella += r.gabriella
+    return acc
+  }, { opco: 0, sabrina: 0, giovani: 0, gabriella: 0 })
+  const totalOps = sums.opco + sums.sabrina + sums.giovani + sums.gabriella || 1
+  const operatorData = [
+    { name: 'OPCO', total: sums.opco },
+    { name: 'Alizia', total: sums.sabrina },
+    { name: 'Justus', total: sums.giovani },
+    { name: 'Antonella', total: sums.gabriella },
+  ].map(o => ({ ...o, percentage: Math.round((o.total / totalOps) * 1000) / 10 }))
 
   return NextResponse.json({ kpis, revenueData, clientData, operatorData })
 }
