@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
 
     let response: any
     try {
-      response = await ai.models.generateContent({ model: 'gemini-2.0-flash', contents })
+      response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents })
     } catch (e: any) {
       // 429 rate limit → one retry on a lighter model
       if (String(e?.message ?? e).includes('429') || String(e?.message ?? e).includes('RESOURCE_EXHAUSTED')) {
