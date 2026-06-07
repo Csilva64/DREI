@@ -59,7 +59,8 @@ export async function recalculateKPIs(organizationId?: string): Promise<void> {
   const total2025 = revenue.filter((r: any) => Number(r.year) === 2025).reduce((s: number, r: any) => s + Number(r.revenue), 0)
   const total2026 = revenue.filter((r: any) => Number(r.year) === 2026).reduce((s: number, r: any) => s + Number(r.revenue), 0)
   const yoyGrowth = total2025 > 0 ? ((total2026 - total2025) / total2025) * 100 : 0
-  await (admin as any).from('dashboard_kpis').upsert({
+
+  const payload = {
     organization_id: orgId,
     total_revenue: totalRevenue,
     best_month: best.month,
@@ -67,7 +68,12 @@ export async function recalculateKPIs(organizationId?: string): Promise<void> {
     monthly_average: monthlyAverage,
     total_payouts: totalPayouts,
     yoy_growth: Math.round(yoyGrowth * 10) / 10,
-  })
+  }
+
+  // Update-or-insert by org WITHOUT relying on a DB unique constraint:
+  // delete any existing KPI rows for this org, then insert one clean row.
+  await (admin as any).from('dashboard_kpis').delete().eq('organization_id', orgId)
+  await (admin as any).from('dashboard_kpis').insert(payload)
 }
 
 export function parseCSV(text: string): Record<string, string>[] {

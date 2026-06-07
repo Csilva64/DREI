@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   const admin = getAdmin()
 
   const [kpiRes, revRes, cliRes, opRes] = await Promise.all([
-    (admin as any).from('dashboard_kpis').select('*').eq('organization_id', orgId).maybeSingle(),
+    (admin as any).from('dashboard_kpis').select('*').eq('organization_id', orgId).order('id', { ascending: false }).limit(1).maybeSingle(),
     (admin as any).from('monthly_revenue').select('*').eq('organization_id', orgId).order('sort_order'),
     (admin as any).from('client_data').select('*').eq('organization_id', orgId).order('rank'),
     (admin as any).from('operator_payouts').select('*').eq('organization_id', orgId).order('sort_order'),
