@@ -67,13 +67,17 @@ export async function GET(req: NextRequest) {
     acc.opco += r.opco; acc.sabrina += r.sabrina; acc.giovani += r.giovani; acc.gabriella += r.gabriella
     return acc
   }, { opco: 0, sabrina: 0, giovani: 0, gabriella: 0 })
-  const totalOps = sums.opco + sums.sabrina + sums.giovani + sums.gabriella || 1
+  const totalPayoutsLive = sums.opco + sums.sabrina + sums.giovani + sums.gabriella
+  const totalOps = totalPayoutsLive || 1
   const operatorData = [
     { name: 'OPCO', total: sums.opco },
     { name: 'Alizia', total: sums.sabrina },
     { name: 'Justus', total: sums.giovani },
     { name: 'Antonella', total: sums.gabriella },
   ].map(o => ({ ...o, percentage: Math.round((o.total / totalOps) * 1000) / 10 }))
+
+  // Keep the Total Repasses KPI consistent with the table/pie, live
+  kpis.totalPayouts = totalPayoutsLive
 
   return NextResponse.json({ kpis, revenueData, clientData, operatorData })
 }
