@@ -3,35 +3,38 @@ import { verifyUser } from '@/lib/supabase/admin'
 import { GoogleGenAI } from '@google/genai'
 
 const SCHEMA_CONTEXT = `
-You are a data extraction assistant. Extract financial data from the provided PDF text and return ONLY valid JSON.
+You extract and AGGREGATE financial data from a document (which may have multiple sheets/pages such as per-FILE tabs, a RESUMO/summary tab, and a productivity/client tab) into a normalized dashboard model. Return ONLY valid JSON.
 
-The dashboard has three tables:
+Three target tables:
 
-1. monthly_revenue — monthly billing data:
-   Fields: sort_order (int), month (string, e.g. "Jan/25"), year (int), revenue (number),
-   opco (number), sabrina (number), giovani (number), gabriella (number), is_highlight (boolean)
+1. monthly_revenue — ONE row PER MONTH (aggregated). Never output the same month twice.
+   Fields: sort_order (int, chronological 0,1,2...), month (string "Mmm/AA" e.g. "Abr/26"), year (int),
+   revenue (number = total billing that month), opco (number), sabrina (number), giovani (number),
+   gabriella (number), is_highlight (boolean). opco/sabrina/giovani/gabriella are operator repasse
+   amounts for that month (0 if unknown).
 
-2. client_data — top clients:
-   Fields: rank (int), name (string), revenue (number), percentage (number)
+2. client_data — TOP 5 UNIQUE clients ranked by total revenue across the whole document.
+   Fields: rank (int, sequential 1..5 with NO duplicates), name (string, unique client name),
+   revenue (number = that client's TOTAL summed across all files/sheets), percentage (number = client revenue / sum of all clients * 100).
+   Deduplicate: if the same client appears in many FILE sheets, SUM them into a single entry.
 
-3. operator_payouts — operator payouts:
-   Fields: sort_order (int), name (string), total (number), percentage (number)
+3. operator_payouts — one row per operator (e.g. OPCO, SABRINA, GIOVANI, GABRIELLA), totals summed.
+   Fields: sort_order (int), name (string), total (number), percentage (number = total / sum of all * 100).
 
-Return ONLY a JSON object with the keys that are present in the document:
-{
-  "monthly_revenue": [...] or omit if not present,
-  "client_data": [...] or omit if not present,
-  "operator_payouts": [...] or omit if not present,
-  "summary": "brief description of what was found"
-}
+CRITICAL AGGREGATION RULES:
+- AGGREGATE, do not list raw rows. Sum amounts; group by month and by client.
+- monthly_revenue: exactly one entry per distinct month. If the file is a single month, output one row.
+- client_data: exactly 5 entries max, ranks 1..5, each a DIFFERENT client, sorted by revenue desc. Never repeat a name. Never set every rank to 1.
+- operator_payouts: one entry per operator, no duplicates.
+- Ignore rows you cannot attribute to a month/client.
 
-Rules:
-- Return ONLY the JSON object, no markdown, no explanation
-- Numeric values must be plain numbers (no currency symbols)
-- If a field value is missing/unknown, use 0
-- is_highlight should be true only for the highest revenue month
-- sort_order should reflect the order rows appear in the document
-- If the document doesn't contain recognizable financial table data, return {"error": "No financial data found", "summary": "..."}
+Return ONLY this JSON (omit a key if truly absent):
+{ "monthly_revenue": [...], "client_data": [...], "operator_payouts": [...], "summary": "what was found" }
+
+- Numbers are plain (no "R$", no thousands separators). Use 0 when unknown.
+- is_highlight=true only for the single highest-revenue month.
+- No markdown, no commentary, JSON only.
+- If no recognizable financial data: {"error":"No financial data found","summary":"..."}
 `
 
 export async function POST(request: NextRequest) {
