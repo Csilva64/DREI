@@ -60,10 +60,20 @@ export async function POST(request: NextRequest) {
 
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GENAI_API_KEY })
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
-      contents: `${SCHEMA_CONTEXT}\n\nDOCUMENT TEXT (may contain multiple sheets/pages):\n${text.slice(0, 120000)}`,
-    })
+    const contents = `${SCHEMA_CONTEXT}\n\nDOCUMENT TEXT (may contain multiple sheets/pages):\n${text.slice(0, 40000)}`
+
+    let response: any
+    try {
+      response = await ai.models.generateContent({ model: 'gemini-2.0-flash', contents })
+    } catch (e: any) {
+      // 429 rate limit → one retry on a lighter model
+      if (String(e?.message ?? e).includes('429') || String(e?.message ?? e).includes('RESOURCE_EXHAUSTED')) {
+        return NextResponse.json({
+          error: 'Limite da IA atingido (cota gratuita do Gemini). Tente novamente em ~1 minuto ou ative o faturamento no Google AI Studio.',
+        }, { status: 429 })
+      }
+      throw e
+    }
 
     const raw = response.text?.trim() ?? ''
     const cleaned = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()

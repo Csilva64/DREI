@@ -45,15 +45,22 @@ async function parseXLSXFlat(file: File): Promise<Record<string, string>[]> {
   return XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false }) as Record<string, string>[]
 }
 
-// Dump ALL sheets to labeled CSV text — for AI interpretation of complex workbooks
+// Dump sheets to labeled CSV text — capped to keep AI input small.
+// Detail sheets (productivity/passenger lists) are heavily truncated.
 async function extractXLSXText(file: File): Promise<string> {
   const XLSX = await import('xlsx')
   const buf = await file.arrayBuffer()
   const wb = XLSX.read(buf, { type: 'array' })
   const parts: string[] = []
   for (const name of wb.SheetNames) {
-    const csv = XLSX.utils.sheet_to_csv(wb.Sheets[name])
-    parts.push(`### ABA: ${name}\n${csv}`)
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, defval: '' }) as any[][]
+    // Detail/analytic sheets → keep only first 25 rows (header + sample)
+    const isDetail = /produtiv|anal[ií]tico|passageir|detalhe/i.test(name)
+    const cap = isDetail ? 25 : 80
+    const sliced = rows.slice(0, cap)
+      .map(r => r.slice(0, 12).join(',')) // cap columns too
+      .filter(l => l.replace(/,/g, '').trim() !== '') // drop empty lines
+    parts.push(`### ABA: ${name}${rows.length > cap ? ` (primeiras ${cap} de ${rows.length} linhas)` : ''}\n${sliced.join('\n')}`)
   }
   return parts.join('\n\n')
 }
