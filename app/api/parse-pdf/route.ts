@@ -85,18 +85,24 @@ export async function POST(request: NextRequest) {
       throw e
     }
 
-    const raw = response.text?.trim() ?? ''
-    // Robust JSON extraction: strip fences, then take from first { to last }
-    let cleaned = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
-    const first = cleaned.indexOf('{')
-    const last = cleaned.lastIndexOf('}')
-    if (first >= 0 && last > first) cleaned = cleaned.slice(first, last + 1)
+    const raw = response.text ?? ''
 
     let parsed: any
-    try { parsed = JSON.parse(cleaned) }
-    catch {
-      console.error('[parse-pdf] non-JSON. len=', raw.length, 'finishReason=', (response as any)?.candidates?.[0]?.finishReason, 'raw300=', raw.slice(0, 300))
-      return NextResponse.json({ error: 'AI returned non-JSON response', raw: raw.slice(0, 500) }, { status: 422 })
+    try {
+      // responseMimeType json → raw should already be pure JSON
+      parsed = JSON.parse(raw)
+    } catch {
+      // Fallback: strip fences + brace-slice
+      try {
+        let cleaned = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
+        const first = cleaned.indexOf('{')
+        const last = cleaned.lastIndexOf('}')
+        if (first >= 0 && last > first) cleaned = cleaned.slice(first, last + 1)
+        parsed = JSON.parse(cleaned)
+      } catch {
+        console.error('[parse-pdf] non-JSON. len=', raw.length, 'finishReason=', (response as any)?.candidates?.[0]?.finishReason, 'tail=', raw.slice(-200))
+        return NextResponse.json({ error: 'AI returned non-JSON response', raw: raw.slice(0, 500) }, { status: 422 })
+      }
     }
 
     if (parsed.error) return NextResponse.json({ error: parsed.error, summary: parsed.summary }, { status: 422 })
