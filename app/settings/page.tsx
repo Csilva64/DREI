@@ -20,10 +20,9 @@ export default function SettingsPage() {
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [msg, setMsg] = useState('')
   const [uploading, setUploading] = useState(false)
+  const [dragging, setDragging] = useState(false)
 
-  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
+  async function uploadLogo(file: File) {
     setUploading(true)
     setMsg('')
     try {
@@ -47,6 +46,19 @@ export default function SettingsPage() {
     } finally {
       setUploading(false)
     }
+  }
+
+  function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (file) uploadLogo(file)
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault()
+    setDragging(false)
+    if (!canEdit) return
+    const file = e.dataTransfer.files?.[0]
+    if (file) uploadLogo(file)
   }
 
   // Populate form from the logged-in org's branding when it loads
@@ -137,22 +149,35 @@ export default function SettingsPage() {
 
           <div>
             <label className={lbl}>Logo</label>
-            <div className="flex items-center gap-3">
-              {form.logoUrl && (
-                <img src={form.logoUrl} alt="logo" className="h-12 w-12 object-contain rounded-lg border border-slate-200 bg-white p-1"
-                  onError={e => (e.currentTarget.style.display = 'none')} />
+            <label
+              onDragOver={e => { e.preventDefault(); if (canEdit) setDragging(true) }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={handleDrop}
+              className={cn(
+                "flex items-center gap-3 p-3 rounded-xl border-2 border-dashed transition-colors",
+                canEdit ? "cursor-pointer" : "cursor-not-allowed",
+                dragging ? "border-orange-500 bg-orange-50"
+                  : canEdit ? "border-slate-300 hover:border-orange-400" : "border-slate-200"
               )}
-              <label className={cn(
-                "flex-1 cursor-pointer text-center py-2.5 rounded-lg border border-dashed text-sm font-semibold transition-colors",
-                canEdit ? "border-slate-300 text-slate-600 hover:border-orange-400 hover:text-orange-600" : "border-slate-200 text-slate-300 cursor-not-allowed"
-              )}>
-                {uploading ? 'Enviando...' : (form.logoUrl ? 'Trocar logo' : 'Enviar logo')}
-                <input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp,image/gif"
-                  className="hidden" disabled={!canEdit || uploading}
-                  onChange={handleLogoUpload} />
-              </label>
-            </div>
-            <p className="text-xs text-slate-400 mt-1">PNG, JPG, SVG, WEBP ou GIF · máx. 2 MB</p>
+            >
+              {form.logoUrl ? (
+                <img src={form.logoUrl} alt="logo" className="h-12 w-12 object-contain rounded-lg border border-slate-200 bg-white p-1 flex-shrink-0"
+                  onError={e => (e.currentTarget.style.display = 'none')} />
+              ) : (
+                <div className="h-12 w-12 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                </div>
+              )}
+              <div className="flex-1 text-sm">
+                <span className={cn("font-semibold", canEdit ? "text-orange-600" : "text-slate-300")}>
+                  {uploading ? 'Enviando...' : dragging ? 'Solte o arquivo aqui' : (form.logoUrl ? 'Trocar logo' : 'Arraste ou clique para enviar')}
+                </span>
+                <p className="text-xs text-slate-400 mt-0.5">PNG, JPG, SVG, WEBP ou GIF · máx. 2 MB</p>
+              </div>
+              <input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp,image/gif"
+                className="hidden" disabled={!canEdit || uploading}
+                onChange={handleLogoUpload} />
+            </label>
           </div>
 
           <div>
