@@ -67,19 +67,30 @@ export async function POST(request: NextRequest) {
 
     let response: any
     try {
-      response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents })
+      response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents,
+        config: {
+          responseMimeType: 'application/json',
+          thinkingConfig: { thinkingBudget: 0 },
+        },
+      })
     } catch (e: any) {
-      // 429 rate limit → one retry on a lighter model
-      if (String(e?.message ?? e).includes('429') || String(e?.message ?? e).includes('RESOURCE_EXHAUSTED')) {
+      const m = String(e?.message ?? e)
+      if (m.includes('429') || m.includes('RESOURCE_EXHAUSTED')) {
         return NextResponse.json({
-          error: 'Limite da IA atingido (cota gratuita do Gemini). Tente novamente em ~1 minuto ou ative o faturamento no Google AI Studio.',
+          error: 'Limite da IA atingido (cota do Gemini). Tente novamente em ~1 minuto.',
         }, { status: 429 })
       }
       throw e
     }
 
     const raw = response.text?.trim() ?? ''
-    const cleaned = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
+    // Robust JSON extraction: strip fences, then take from first { to last }
+    let cleaned = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
+    const first = cleaned.indexOf('{')
+    const last = cleaned.lastIndexOf('}')
+    if (first >= 0 && last > first) cleaned = cleaned.slice(first, last + 1)
 
     let parsed: any
     try { parsed = JSON.parse(cleaned) }
