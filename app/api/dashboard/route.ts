@@ -35,12 +35,27 @@ export async function GET(req: NextRequest) {
     yoyGrowth: 0,
   }
 
+  const PT_MONTHS: Record<string, number> = {
+    jan: 0, fev: 1, mar: 2, abr: 3, mai: 4, jun: 5,
+    jul: 6, ago: 7, set: 8, out: 9, nov: 10, dez: 11,
+  }
+  function chronoKey(month: string, year: number): number {
+    const abbr = String(month).slice(0, 3).toLowerCase()
+    const mi = PT_MONTHS[abbr] ?? 0
+    let y = Number(year) || 0
+    if (!y) { // derive from "Mmm/AA"
+      const yy = String(month).split('/')[1]
+      if (yy) y = 2000 + Number(yy)
+    }
+    return y * 12 + mi
+  }
+
   const revenueData = (revRes.data ?? []).map((row: any) => ({
     id: row.id, month: row.month, year: row.year,
     revenue: Number(row.revenue), opco: Number(row.opco),
     sabrina: Number(row.sabrina), giovani: Number(row.giovani), gabriella: Number(row.gabriella),
     isHighlight: row.is_highlight,
-  }))
+  })).sort((a: any, b: any) => chronoKey(a.month, a.year) - chronoKey(b.month, b.year))
 
   const clientData = (cliRes.data ?? []).map((row: any) => ({
     rank: row.rank, name: row.name, revenue: Number(row.revenue), percentage: Number(row.percentage),

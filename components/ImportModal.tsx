@@ -217,7 +217,14 @@ export default function ImportModal({ onClose, onImported }: Props) {
           cur.gabriella += Number(r.gabriella) || 0
           byMonth.set(key, cur)
         }
-        const months = [...byMonth.values()]
+        const PT: Record<string, number> = { jan:0,fev:1,mar:2,abr:3,mai:4,jun:5,jul:6,ago:7,set:8,out:9,nov:10,dez:11 }
+        const ck = (m: any) => {
+          const mi = PT[String(m.month).slice(0,3).toLowerCase()] ?? 0
+          let y = Number(m.year) || 0
+          if (!y) { const yy = String(m.month).split('/')[1]; if (yy) y = 2000 + Number(yy) }
+          return y * 12 + mi
+        }
+        const months = [...byMonth.values()].sort((a, b) => ck(a) - ck(b))
         const maxRev = Math.max(...months.map(m => m.revenue))
         buckets.monthly_revenue = months.map((m, i) => ({ ...m, sort_order: i, is_highlight: m.revenue === maxRev }))
       }
