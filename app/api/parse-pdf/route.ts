@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
         contents,
         config: {
           responseMimeType: 'application/json',
-          thinkingConfig: { thinkingBudget: 0 },
+          maxOutputTokens: 8192,
         },
       })
     } catch (e: any) {
@@ -94,7 +94,10 @@ export async function POST(request: NextRequest) {
 
     let parsed: any
     try { parsed = JSON.parse(cleaned) }
-    catch { return NextResponse.json({ error: 'AI returned non-JSON response', raw: raw.slice(0, 500) }, { status: 422 }) }
+    catch {
+      console.error('[parse-pdf] non-JSON. len=', raw.length, 'finishReason=', (response as any)?.candidates?.[0]?.finishReason, 'raw300=', raw.slice(0, 300))
+      return NextResponse.json({ error: 'AI returned non-JSON response', raw: raw.slice(0, 500) }, { status: 422 })
+    }
 
     if (parsed.error) return NextResponse.json({ error: parsed.error, summary: parsed.summary }, { status: 422 })
 
