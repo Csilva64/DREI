@@ -67,7 +67,14 @@ export default function ImportModal({ onClose, onImported }: Props) {
   const [step, setStep] = useState<Step>('select')
   const [message, setMessage] = useState('')
   const [progress, setProgress] = useState('')
+  const [dragging, setDragging] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault()
+    setDragging(false)
+    addFiles(e.dataTransfer.files)
+  }
 
   const canUsePDF = subscription.features.pdfImport
   const hasPDF = entries.some(e => e.kind === 'pdf')
@@ -211,13 +218,22 @@ export default function ImportModal({ onClose, onImported }: Props) {
 
           {(step === 'select' || step === 'error') && (
             <>
-              {/* File picker */}
-              <div onClick={() => inputRef.current?.click()} className={cn(
-                "border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all",
-                entries.length ? "border-orange-400 bg-orange-50/50" : "border-slate-200 hover:border-orange-300 hover:bg-orange-50/50"
-              )}>
+              {/* File picker + drop zone */}
+              <div
+                onClick={() => inputRef.current?.click()}
+                onDragOver={e => { e.preventDefault(); setDragging(true) }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={handleDrop}
+                className={cn(
+                  "border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all",
+                  dragging ? "border-orange-500 bg-orange-50"
+                    : entries.length ? "border-orange-400 bg-orange-50/50"
+                    : "border-slate-200 hover:border-orange-300 hover:bg-orange-50/50"
+                )}>
                 <Upload className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                <p className="text-sm text-slate-500">Clique para selecionar arquivos</p>
+                <p className="text-sm text-slate-500">
+                  {dragging ? 'Solte os arquivos aqui' : 'Arraste ou clique para selecionar'}
+                </p>
                 <p className="text-xs text-slate-400 mt-1">.csv · .json · .pdf · múltiplos</p>
               </div>
               <input ref={inputRef} type="file" multiple
