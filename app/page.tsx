@@ -450,10 +450,6 @@ export default function App() {
               <h2 className="text-2xl font-bold">Observações do Período</h2>
               <ul className="space-y-3 text-slate-400 text-sm">
                 <li className="flex gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-1.5 flex-shrink-0"></div>
-                  <span><strong>Out/25:</strong> Atualizado com TRIGGER 2808 — Carnaval 2026.</span>
-                </li>
-                <li className="flex gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 flex-shrink-0"></div>
                   <span><strong>ANTONELLA:</strong> Repasses a partir de Out/2025 (FILE 2808) e Fev/2026 (complementar).</span>
                 </li>
