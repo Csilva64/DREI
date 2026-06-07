@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
       metadata: { flow: 'public', email: hasEmail ? email : '', plan, company_name: companyName ?? '' },
     },
     metadata: { flow: 'public', email: hasEmail ? email : '', plan, company_name: companyName ?? '' },
-    success_url: `${appUrl}/obrigado${hasEmail ? `?email=${encodeURIComponent(email)}` : ''}`,
+    success_url: `${appUrl}/obrigado?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${appUrl}/?canceled=true`,
     locale: 'pt-BR',
     allow_promotion_codes: true,
