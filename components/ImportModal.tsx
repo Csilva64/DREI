@@ -14,12 +14,12 @@ const TABLES = [
 
 type TableValue = typeof TABLES[number]['value']
 type Step = 'select' | 'processing' | 'done' | 'error'
-type FileKind = 'csv' | 'json' | 'pdf' | 'unknown'
+type FileKind = 'csv' | 'json' | 'pdf' | 'xlsx' | 'unknown'
 
 interface FileEntry {
   file: File
   kind: FileKind
-  table: TableValue // for csv/json (ignored for pdf — AI detects)
+  table: TableValue // for csv/json/xlsx (ignored for pdf — AI detects)
 }
 
 interface Props {
@@ -32,7 +32,17 @@ function detectKind(file: File): FileKind {
   if (n.endsWith('.csv')) return 'csv'
   if (n.endsWith('.json')) return 'json'
   if (n.endsWith('.pdf')) return 'pdf'
+  if (n.endsWith('.xlsx') || n.endsWith('.xls')) return 'xlsx'
   return 'unknown'
+}
+
+async function parseXLSX(file: File): Promise<Record<string, string>[]> {
+  const XLSX = await import('xlsx')
+  const buf = await file.arrayBuffer()
+  const wb = XLSX.read(buf, { type: 'array' })
+  const sheet = wb.Sheets[wb.SheetNames[0]]
+  // defval '' so empty cells become empty strings; raw false for formatted values
+  return XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false }) as Record<string, string>[]
 }
 
 function parseCSV(text: string): Record<string, string>[] {
@@ -149,6 +159,8 @@ export default function ImportModal({ onClose, onImported }: Props) {
         } else if (e.kind === 'csv') {
           const text = await e.file.text()
           buckets[e.table].push(...parseCSV(text))
+        } else if (e.kind === 'xlsx') {
+          buckets[e.table].push(...await parseXLSX(e.file))
         } else if (e.kind === 'json') {
           const text = await e.file.text()
           const arr = JSON.parse(text)
@@ -189,6 +201,7 @@ export default function ImportModal({ onClose, onImported }: Props) {
       csv: 'bg-emerald-100 text-emerald-700',
       json: 'bg-blue-100 text-blue-700',
       pdf: 'bg-purple-100 text-purple-700',
+      xlsx: 'bg-green-100 text-green-700',
       unknown: 'bg-red-100 text-red-700',
     }
     return map[kind]
@@ -206,7 +219,7 @@ export default function ImportModal({ onClose, onImported }: Props) {
             </div>
             <div>
               <h2 className="font-bold text-slate-900">Importar Dados</h2>
-              <p className="text-xs text-slate-500">CSV, JSON ou PDF · vários arquivos · substitui dados existentes</p>
+              <p className="text-xs text-slate-500">CSV, Excel, JSON ou PDF · vários arquivos · substitui dados existentes</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors">
@@ -234,10 +247,10 @@ export default function ImportModal({ onClose, onImported }: Props) {
                 <p className="text-sm text-slate-500">
                   {dragging ? 'Solte os arquivos aqui' : 'Arraste ou clique para selecionar'}
                 </p>
-                <p className="text-xs text-slate-400 mt-1">.csv · .json · .pdf · múltiplos</p>
+                <p className="text-xs text-slate-400 mt-1">.csv · .xlsx · .json · .pdf · múltiplos</p>
               </div>
               <input ref={inputRef} type="file" multiple
-                accept=".csv,.json,.pdf,text/csv,application/json,application/pdf"
+                accept=".csv,.json,.pdf,.xlsx,.xls,text/csv,application/json,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
                 className="hidden"
                 onChange={e => addFiles(e.target.files)} />
 
@@ -254,7 +267,7 @@ export default function ImportModal({ onClose, onImported }: Props) {
                         {e.kind}
                       </span>
                       <span className="text-xs text-slate-700 truncate flex-1 min-w-0">{e.file.name}</span>
-                      {(e.kind === 'csv' || e.kind === 'json') && (
+                      {(e.kind === 'csv' || e.kind === 'json' || e.kind === 'xlsx') && (
                         <select
                           value={e.table}
                           onChange={ev => setEntryTable(idx, ev.target.value as TableValue)}
