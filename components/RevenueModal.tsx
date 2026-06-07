@@ -3,9 +3,16 @@
 import { useState, type ReactNode } from 'react';
 import { X, Trash2, Save } from 'lucide-react';
 import type { MonthlyRevenue } from '@/types';
-import { upsertRevenueRow, deleteRevenueRow } from '@/lib/mutations';
-import { useSubscription } from '@/components/providers/SubscriptionProvider';
+import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
+
+async function authHeaders() {
+  const { data: { session } } = await createClient().auth.getSession();
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${session?.access_token ?? ''}`,
+  };
+}
 
 interface Props {
   row: MonthlyRevenue | null; // null = novo
@@ -15,7 +22,6 @@ interface Props {
 }
 
 export default function RevenueModal({ row, sortOrder, onClose, onSaved }: Props) {
-  const { organizationId } = useSubscription();
   const isNew = !row?.id;
 
   const [form, setForm] = useState({
@@ -40,8 +46,13 @@ export default function RevenueModal({ row, sortOrder, onClose, onSaved }: Props
     setSaving(true);
     setError(null);
     try {
-      if (!organizationId) throw new Error('Organização não carregada. Recarregue a página.');
-      await upsertRevenueRow({ ...form, id: row?.id, sortOrder: row?.id ? (row as any).sortOrder ?? sortOrder : sortOrder }, organizationId);
+      const res = await fetch('/api/revenue', {
+        method: 'POST',
+        headers: await authHeaders(),
+        body: JSON.stringify({ ...form, id: row?.id, sortOrder: row?.id ? (row as any).sortOrder ?? sortOrder : sortOrder }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
       onSaved();
       onClose();
     } catch (e: any) {
@@ -56,7 +67,12 @@ export default function RevenueModal({ row, sortOrder, onClose, onSaved }: Props
     setSaving(true);
     setError(null);
     try {
-      await deleteRevenueRow(row.id);
+      const res = await fetch(`/api/revenue?id=${row.id}`, {
+        method: 'DELETE',
+        headers: await authHeaders(),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
       onSaved();
       onClose();
     } catch (e: any) {
