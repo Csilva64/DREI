@@ -36,13 +36,26 @@ function detectKind(file: File): FileKind {
   return 'unknown'
 }
 
-async function parseXLSX(file: File): Promise<Record<string, string>[]> {
+// Flat-table parse (first sheet, header row 1) — used when columns already match
+async function parseXLSXFlat(file: File): Promise<Record<string, string>[]> {
   const XLSX = await import('xlsx')
   const buf = await file.arrayBuffer()
   const wb = XLSX.read(buf, { type: 'array' })
   const sheet = wb.Sheets[wb.SheetNames[0]]
-  // defval '' so empty cells become empty strings; raw false for formatted values
   return XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false }) as Record<string, string>[]
+}
+
+// Dump ALL sheets to labeled CSV text — for AI interpretation of complex workbooks
+async function extractXLSXText(file: File): Promise<string> {
+  const XLSX = await import('xlsx')
+  const buf = await file.arrayBuffer()
+  const wb = XLSX.read(buf, { type: 'array' })
+  const parts: string[] = []
+  for (const name of wb.SheetNames) {
+    const csv = XLSX.utils.sheet_to_csv(wb.Sheets[name])
+    parts.push(`### ABA: ${name}\n${csv}`)
+  }
+  return parts.join('\n\n')
 }
 
 function parseCSV(text: string): Record<string, string>[] {
@@ -143,8 +156,7 @@ export default function ImportModal({ onClose, onImported }: Props) {
         const e = entries[i]
         setProgress(`Processando ${i + 1}/${entries.length}: ${e.file.name}`)
 
-        if (e.kind === 'pdf') {
-          const text = await extractPDFText(e.file)
+        async function aiParse(text: string) {
           const res = await fetch('/api/parse-pdf', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -156,11 +168,25 @@ export default function ImportModal({ onClose, onImported }: Props) {
             const rows = data.data?.[t.value]
             if (Array.isArray(rows)) buckets[t.value].push(...rows)
           }
+        }
+
+        if (e.kind === 'pdf') {
+          await aiParse(await extractPDFText(e.file))
         } else if (e.kind === 'csv') {
           const text = await e.file.text()
           buckets[e.table].push(...parseCSV(text))
         } else if (e.kind === 'xlsx') {
-          buckets[e.table].push(...await parseXLSX(e.file))
+          // Try flat table first; if columns don't match, fall back to AI
+          const flat = await parseXLSXFlat(e.file)
+          const keyCol = e.table === 'monthly_revenue' ? 'month' : 'name'
+          const looksFlat = flat.length > 0 && String(flat[0]?.[keyCol] ?? '').trim() !== ''
+          if (looksFlat) {
+            buckets[e.table].push(...flat)
+          } else {
+            if (!canUsePDF) throw new Error(`${e.file.name}: Excel com layout complexo requer interpretação por IA (planos Pro e Agência).`)
+            setProgress(`Interpretando ${e.file.name} com IA...`)
+            await aiParse(await extractXLSXText(e.file))
+          }
         } else if (e.kind === 'json') {
           const text = await e.file.text()
           const arr = JSON.parse(text)

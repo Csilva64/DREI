@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GENAI_API_KEY })
     const response = await ai.models.generateContent({
       model: 'gemini-2.0-flash',
-      contents: `${SCHEMA_CONTEXT}\n\nPDF TEXT:\n${text.slice(0, 15000)}`,
+      contents: `${SCHEMA_CONTEXT}\n\nDOCUMENT TEXT (may contain multiple sheets/pages):\n${text.slice(0, 120000)}`,
     })
 
     const raw = response.text?.trim() ?? ''
