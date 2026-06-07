@@ -31,7 +31,7 @@ export function exportCSV(
 
   sections.push('FATURAMENTO MENSAL')
   sections.push(toCSV(
-    ['Mês', 'Ano', 'Faturamento', 'OPCO', 'Alizia', 'Justus', 'Antonella', 'Destaque'],
+    ['Mês', 'Ano', 'Faturamento', 'OPCO', 'Sabrina', 'Giovani', 'Gabriela', 'Destaque'],
     revenue.map(r => [r.month, r.year, r.revenue, r.opco, r.sabrina, r.giovani, r.gabriella, r.isHighlight ? 'Sim' : 'Não'])
   ))
 
@@ -122,7 +122,7 @@ export async function exportPDF(
 
   autoTable(doc, {
     startY: y,
-    head: [['Mês', 'Faturamento', 'OPCO', 'Alizia', 'Justus', 'Antonella']],
+    head: [['Mês', 'Faturamento', 'OPCO', 'Sabrina', 'Giovani', 'Gabriela']],
     body: revenue.map(r => [
       r.month,
       fmt(r.revenue),

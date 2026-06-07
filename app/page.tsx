@@ -402,9 +402,9 @@ export default function App() {
                           <th className="px-6 py-4">Mês</th>
                           <th className="px-6 py-4">Faturamento</th>
                           <th className="px-6 py-4 font-bold text-orange-600 text-center">OPCO</th>
-                          <th className="px-6 py-4 text-center">Alizia</th>
-                          <th className="px-6 py-4 text-center">Justus</th>
-                          <th className="px-6 py-4 text-center">Antonella</th>
+                          <th className="px-6 py-4 text-center">Sabrina</th>
+                          <th className="px-6 py-4 text-center">Giovani</th>
+                          <th className="px-6 py-4 text-center">Gabriela</th>
                           <th className="px-4 py-4 text-center w-12"></th>
                         </tr>
                       </thead>

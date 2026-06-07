@@ -71,9 +71,9 @@ export async function GET(req: NextRequest) {
   const totalOps = totalPayoutsLive || 1
   const operatorData = [
     { name: 'OPCO', total: sums.opco },
-    { name: 'Alizia', total: sums.sabrina },
-    { name: 'Justus', total: sums.giovani },
-    { name: 'Antonella', total: sums.gabriella },
+    { name: 'Sabrina', total: sums.sabrina },
+    { name: 'Giovani', total: sums.giovani },
+    { name: 'Gabriela', total: sums.gabriella },
   ].map(o => ({ ...o, percentage: Math.round((o.total / totalOps) * 1000) / 10 }))
 
   // Keep the Total Repasses KPI consistent with the table/pie, live
