@@ -72,7 +72,8 @@ export async function POST(request: NextRequest) {
         contents,
         config: {
           responseMimeType: 'application/json',
-          maxOutputTokens: 8192,
+          maxOutputTokens: 16384,
+          thinkingConfig: { thinkingBudget: 0 }, // disable thinking so tokens go to output
         },
       })
     } catch (e: any) {
