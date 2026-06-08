@@ -498,7 +498,7 @@ export default function App() {
             <span className="text-xs">Powered by OPCO AI</span>
           </div>
           <div className="flex gap-8 text-xs font-medium text-slate-400">
-            <a href="#" className="hover:text-slate-900 transition-colors">Suporte</a>
+            <a href="mailto:suporte@opcoia.com.br" className="hover:text-slate-900 transition-colors">Suporte</a>
           </div>
         </div>
       </footer>
