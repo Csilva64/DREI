@@ -57,12 +57,20 @@ export async function GET(req: NextRequest) {
     isHighlight: row.is_highlight,
   }))
 
-  // Dedup duplicate months — keep the row with the highest revenue
+  // Merge duplicate months — SUM all numeric fields (two lançamentos = one month total)
   const byMonth = new Map<string, any>()
   for (const r of mapped) {
     const key = String(r.month).trim().toLowerCase()
     const cur = byMonth.get(key)
-    if (!cur || r.revenue > cur.revenue) byMonth.set(key, r)
+    if (!cur) {
+      byMonth.set(key, { ...r })
+    } else {
+      cur.revenue += r.revenue
+      cur.opco += r.opco
+      cur.sabrina += r.sabrina
+      cur.giovani += r.giovani
+      cur.gabriella += r.gabriella
+    }
   }
   const revenueData = [...byMonth.values()]
     .sort((a: any, b: any) => chronoKey(a.month, a.year) - chronoKey(b.month, b.year))
