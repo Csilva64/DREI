@@ -495,7 +495,7 @@ export default function App() {
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2 text-slate-400">
             <UserCheck className="w-4 h-4" />
-            <span className="text-xs">Gerado em Mai/2026 · DRE-I OPCO</span>
+            <span className="text-xs">Powered by OPCO AI</span>
           </div>
           <div className="flex gap-8 text-xs font-medium text-slate-400">
             <a href="#" className="hover:text-slate-900 transition-colors">Suporte</a>
