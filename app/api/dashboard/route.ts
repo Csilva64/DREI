@@ -50,12 +50,22 @@ export async function GET(req: NextRequest) {
     return y * 12 + mi
   }
 
-  const revenueData = (revRes.data ?? []).map((row: any) => ({
+  const mapped = (revRes.data ?? []).map((row: any) => ({
     id: row.id, month: row.month, year: row.year,
     revenue: Number(row.revenue), opco: Number(row.opco),
     sabrina: Number(row.sabrina), giovani: Number(row.giovani), gabriella: Number(row.gabriella),
     isHighlight: row.is_highlight,
-  })).sort((a: any, b: any) => chronoKey(a.month, a.year) - chronoKey(b.month, b.year))
+  }))
+
+  // Dedup duplicate months — keep the row with the highest revenue
+  const byMonth = new Map<string, any>()
+  for (const r of mapped) {
+    const key = String(r.month).trim().toLowerCase()
+    const cur = byMonth.get(key)
+    if (!cur || r.revenue > cur.revenue) byMonth.set(key, r)
+  }
+  const revenueData = [...byMonth.values()]
+    .sort((a: any, b: any) => chronoKey(a.month, a.year) - chronoKey(b.month, b.year))
 
   const clientData = (cliRes.data ?? []).map((row: any) => ({
     rank: row.rank, name: row.name, revenue: Number(row.revenue), percentage: Number(row.percentage),
@@ -76,7 +86,19 @@ export async function GET(req: NextRequest) {
     { name: 'Gabriela', total: sums.gabriella },
   ].map(o => ({ ...o, percentage: Math.round((o.total / totalOps) * 1000) / 10 }))
 
-  // Keep the Total Repasses KPI consistent with the table/pie, live
+  // Recompute all revenue KPIs from the deduped monthly data (single source)
+  if (revenueData.length) {
+    const totalRevenue = revenueData.reduce((s: number, r: any) => s + r.revenue, 0)
+    const best = revenueData.reduce((a: any, b: any) => (b.revenue > a.revenue ? b : a))
+    const t2025 = revenueData.filter((r: any) => Number(r.year) === 2025).reduce((s: number, r: any) => s + r.revenue, 0)
+    const t2026 = revenueData.filter((r: any) => Number(r.year) === 2026).reduce((s: number, r: any) => s + r.revenue, 0)
+    kpis.totalRevenue = totalRevenue
+    kpis.monthlyAverage = totalRevenue / revenueData.length
+    kpis.bestMonth = { month: best.month, value: best.revenue }
+    kpis.yoyGrowth = t2025 > 0 ? Math.round(((t2026 - t2025) / t2025) * 1000) / 10 : 0
+    // mark highlight on the true max month
+    revenueData.forEach((r: any) => { r.isHighlight = r.month === best.month })
+  }
   kpis.totalPayouts = totalPayoutsLive
 
   return NextResponse.json({ kpis, revenueData, clientData, operatorData })
